@@ -396,7 +396,7 @@ function showGate(reason){
   if(reason==='not-signed-in'){
     document.getElementById('gateTitle').textContent='Sign In Required';
     document.getElementById('gateMsg').textContent='Please sign in to your MindStark Library account to access CONNECT.';
-    document.getElementById('gateBtn').href='https://mind-stark-library.vercel.app/signin.html';
+    document.getElementById('gateBtn').href='https://mind-stark-library.vercel.app/signin.html?redirect=https://mind-stark-connect.vercel.app/index.html';
     document.getElementById('gateBtn').textContent='Sign In to Continue';
   }
 }
