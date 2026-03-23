@@ -269,7 +269,7 @@
       <div class="gate-title" id="gateTitle">Scholar Access Only</div>
       <div class="gate-msg" id="gateMsg">MindStark CONNECT is exclusive to Scholar members.</div>
       <a id="gateBtn" href="membership.html" class="gate-btn">Upgrade to Scholar</a>
-      <a href="index.html" class="gate-btn sec">← Back to Library</a>
+      <a href="https://mind-stark-library.vercel.app" class="gate-btn sec">← Back to Library</a>
     </div>
   </div>
 </div>
@@ -278,13 +278,13 @@
 <div class="topbar" style="display:none" id="appTopbar">
   <div class="tb-left">
     <button class="tb-btn mob-btn" style="display:none" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-    <a href="index.html" class="tb-logo"><span class="tb-logo-main">MindStark</span><span class="tb-logo-sub">Library</span></a>
+    <a href="https://mind-stark-library.vercel.app" class="tb-logo"><span class="tb-logo-main">MindStark</span><span class="tb-logo-sub">Library</span></a>
     <div class="tb-div"></div>
     <span class="tb-title">CONNECT</span>
     <span class="tb-badge">Scholar</span>
   </div>
   <div class="tb-right">
-    <a href="index.html" class="back-link">← Library</a>
+    <a href="https://mind-stark-library.vercel.app" class="back-link">← Library</a>
     <button class="tb-btn" onclick="showToast('🔔 Notifications coming soon')">🔔</button>
     <div class="tb-avatar" id="tbAvatar">?<div class="od"></div></div>
   </div>
@@ -396,7 +396,7 @@ function showGate(reason){
   if(reason==='not-signed-in'){
     document.getElementById('gateTitle').textContent='Sign In Required';
     document.getElementById('gateMsg').textContent='Please sign in to your MindStark Library account to access CONNECT.';
-    document.getElementById('gateBtn').href='signin.html?redirect=connect.html';
+    document.getElementById('gateBtn').href='https://mind-stark-library.vercel.app/signin.html';
     document.getElementById('gateBtn').textContent='Sign In to Continue';
   }
 }
