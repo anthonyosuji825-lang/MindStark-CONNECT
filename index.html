@@ -372,8 +372,19 @@ let msgChannel = null, bookTimer = null, userTimer = null;
 })();
 
 async function initApp(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ showGate('not-signed-in'); return; }
+  /* Check URL for tokens passed from Library */
+const urlParams = new URLSearchParams(window.location.search);
+const accessToken = urlParams.get('access_token');
+const refreshToken = urlParams.get('refresh_token');
+
+if (accessToken && refreshToken) {
+  await sb.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  /* Clean URL */
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+const { data:{ session } } = await sb.auth.getSession();
+if(!session){ showGate('not-signed-in'); return; }
   currentUser = session.user;
   const { data:profile } = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
   if(!profile){ showGate('no-profile'); return; }
