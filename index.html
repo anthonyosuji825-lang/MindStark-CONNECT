@@ -186,18 +186,60 @@
     /* TOAST */
     .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--brown);color:var(--cream);padding:.65rem 1.4rem;border-radius:50px;font-size:.82rem;font-weight:500;box-shadow:0 8px 24px rgba(59,42,26,.3);transition:transform .35s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;display:flex;align-items:center;gap:.5rem}
     .toast.show{transform:translateX(-50%) translateY(0)}
-    /* RESPONSIVE */
+    /* ── RESPONSIVE ── */
     @media(max-width:720px){
-      :root{--sidebar-w:100vw}
-      .app{grid-template-columns:1fr}
-      .sidebar{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:100vw;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:80}
-      .sidebar.open{transform:translateX(0)}
-      .chat-main{grid-column:1}
-      .ham-btn{display:flex}
-      .room-desc,.topbar-btn span:last-child{display:none}
-      .messages-wrap{padding:1rem}
-      .input-area{padding:.7rem 1rem .85rem}
-      .msg-body{max-width:85%}
+      :root{ --topbar-h:54px; }
+      .app{ grid-template-columns:1fr; grid-template-rows:var(--topbar-h) 1fr; }
+      .sidebar{
+        position:fixed; top:var(--topbar-h); left:0; bottom:0; width:100vw;
+        transform:translateX(-100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+        z-index:80; overflow-y:auto;
+      }
+      .sidebar.open{ transform:translateX(0); }
+      .sidebar-list{ max-height:none !important; }
+      .room-item{ padding:.75rem 1.1rem; }
+      .room-avatar{ width:40px; height:40px; font-size:1.1rem; }
+      .r-name{ font-size:.88rem; }
+      .r-preview{ font-size:.75rem; }
+      .sidebar-profile{ padding:1rem 1.1rem; }
+      .chat-main{ grid-column:1; display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h)); overflow:hidden; }
+      .topbar{ padding:0 .85rem; gap:.5rem; }
+      .topbar-center{ flex:1; min-width:0; overflow:hidden; }
+      .room-name{ font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .room-desc{ display:none; }
+      .topbar-right{ gap:.4rem; flex-shrink:0; }
+      .topbar-btn span:last-child{ display:none; }
+      .topbar-btn{ padding:.35rem .55rem; font-size:.8rem; border-radius:8px; }
+      .online-count{ display:none; }
+      .ham-btn{ display:flex; margin-right:.1rem; }
+      .chat-header{ padding:.6rem .9rem; }
+      .ch-avatar{ width:34px; height:34px; font-size:1rem; border-radius:8px; }
+      .ch-name{ font-size:.9rem; }
+      .ch-meta{ font-size:.68rem; }
+      .ch-action span:last-child{ display:none; }
+      .ch-action{ padding:.32rem .55rem; }
+      .messages-wrap{ padding:.75rem .9rem; gap:.1rem; }
+      .msg-body{ max-width:82%; }
+      .msg-bubble{ font-size:.835rem; padding:.5rem .78rem; }
+      .msg-avatar{ width:30px; height:30px; font-size:.72rem; }
+      .msg-sender{ font-size:.73rem; }
+      .msg-time{ font-size:.62rem; }
+      .typing-indicator{ padding:.3rem .9rem .15rem; }
+      .input-area{ padding:.6rem .9rem .75rem; }
+      .input-box{ border-radius:12px; padding:.45rem .45rem .45rem .75rem; }
+      #msg-input{ font-size:.835rem; }
+      .input-hint{ display:none; }
+      .send-btn{ width:36px; height:36px; border-radius:9px; }
+      .members-panel{ width:100vw; }
+      .auth-logo{ font-size:1.7rem; }
+      .auth-card{ padding:1.35rem; }
+      .modal{ padding:1.5rem; border-radius:14px; }
+      .modal h2{ font-size:1.1rem; }
+    }
+    @media(max-width:400px){
+      .topbar-btn{ display:none; }
+      #newRoomTopBtn{ display:flex !important; }
+      .msg-body{ max-width:90%; }
     }
   </style>
 </head>
@@ -409,7 +451,22 @@ async function doSignOut(){
 }
 
 /* ── AUTH LISTENER ── */
+let authResolved = false;
+
+// Safety timeout — if Supabase hasn't responded in 5s, show auth screen
+setTimeout(()=>{
+  if(!authResolved){
+    authResolved = true;
+    setSpinner(false);
+    el('authOverlay').style.display='flex';
+    el('appShell').style.display='none';
+    buildAvatarPicker();
+  }
+}, 5000);
+
 sb.auth.onAuthStateChange(async(event,session)=>{
+  if(authResolved && !session?.user) return; // already shown auth, don't flicker
+  authResolved = true;
   setSpinner(true);
   if(session?.user){
     S.user=session.user;
