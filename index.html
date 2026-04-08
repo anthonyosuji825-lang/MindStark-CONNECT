@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MindStark CONNECT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --cream:#f5f0e8; --warm:#ede5d5; --brown:#3b2a1a; --gold:#c8963e;
+      --rust:#a0522d;  --text:#2c1e0f; --muted:#7a6652; --white:#ffffff;
+      --dark:#1e1208;  --border:rgba(200,150,62,.18); --border2:rgba(59,42,26,.10);
+      --shadow:0 4px 32px rgba(59,42,26,.12);
+      --sidebar-w:280px; --topbar-h:62px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);line-height:1.5}
+    .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--topbar-h) 1fr;height:100vh;width:100vw}
+    .topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;background:var(--brown);border-bottom:1px solid rgba(200,150,62,.2);z-index:100}
+    .topbar-logo{display:flex;flex-direction:column;line-height:1;text-decoration:none}
+    .topbar-logo .t-main{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:900;color:var(--cream)}
+    .topbar-logo .t-sub{font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-top:1px}
+    .topbar-center{display:flex;align-items:center;gap:.6rem}
+    .room-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--cream)}
+    .room-desc{font-size:.75rem;color:rgba(245,240,232,.45)}
+    .topbar-right{display:flex;align-items:center;gap:.65rem}
+    .topbar-btn{background:none;border:1px solid rgba(200,150,62,.25);border-radius:8px;padding:.38rem .8rem;font-family:'DM Sans',sans-serif;font-size:.77rem;font-weight:500;color:rgba(245,240,232,.75);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.35rem}
+    .topbar-btn:hover{background:rgba(200,150,62,.15);border-color:var(--gold);color:var(--gold)}
+    .topbar-btn.active{background:var(--gold);border-color:var(--gold);color:var(--brown)}
+    .online-count{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:rgba(245,240,232,.5)}
+    .online-dot{width:7px;height:7px;border-radius:50%;background:#5cb85c;box-shadow:0 0 6px rgba(92,184,92,.5);animation:pdot 2s ease-in-out infinite}
+    @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.3)}}
+    .ham-btn{display:none;background:none;border:none;cursor:pointer;flex-direction:column;gap:4px;padding:.3rem}
+    .ham-btn span{display:block;width:20px;height:2px;background:var(--cream);border-radius:2px}
+    .sidebar{background:var(--dark);display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(200,150,62,.1)}
+    .sidebar-search{padding:.9rem 1rem;border-bottom:1px solid rgba(200,150,62,.08)}
+    .sidebar-search input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(200,150,62,.15);border-radius:8px;padding:.5rem .85rem;font-family:'DM Sans',sans-serif;font-size:.8rem;color:rgba(245,240,232,.8);outline:none;transition:border-color .2s}
+    .sidebar-search input::placeholder{color:rgba(245,240,232,.3)}
+    .sidebar-search input:focus{border-color:var(--gold)}
+    .sidebar-section{padding:.6rem 1rem .3rem}
+    .sidebar-label{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(200,150,62,.6);font-weight:600;display:flex;align-items:center;justify-content:space-between}
+    .sidebar-label button{background:none;border:none;color:rgba(200,150,62,.6);font-size:.9rem;cursor:pointer;padding:0 .2rem;line-height:1;transition:color .2s}
+    .sidebar-label button:hover{color:var(--gold)}
+    .sidebar-list{list-style:none;padding:.2rem 0;overflow-y:auto}
+    .sidebar-list::-webkit-scrollbar{width:3px}
+    .sidebar-list::-webkit-scrollbar-thumb{background:rgba(200,150,62,.2);border-radius:2px}
+    .room-item{display:flex;align-items:center;gap:.65rem;padding:.55rem 1rem;cursor:pointer;transition:background .15s;position:relative}
+    .room-item:hover{background:rgba(200,150,62,.07)}
+    .room-item.active{background:rgba(200,150,62,.12)}
+    .room-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+    .room-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0;font-family:'Playfair Display',serif;background:rgba(200,150,62,.15);color:var(--gold)}
+    .room-meta{flex:1;min-width:0}
+    .r-name{font-size:.83rem;font-weight:500;color:rgba(245,240,232,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .room-item.active .r-name{color:var(--cream);font-weight:600}
+    .r-preview{font-size:.72rem;color:rgba(245,240,232,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+    .r-time{font-size:.65rem;color:rgba(245,240,232,.25)}
+    .sidebar-profile{padding:.85rem 1rem;border-top:1px solid rgba(200,150,62,.08);display:flex;align-items:center;gap:.75rem;cursor:default;margin-top:auto}
+    .profile-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.85rem;font-weight:700;color:var(--cream);flex-shrink:0;position:relative}
+    .presence-ring{position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;border:2px solid var(--dark);background:#5cb85c}
+    .profile-name{font-size:.82rem;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .profile-status{font-size:.7rem;color:rgba(245,240,232,.4)}
+    .chat-main{display:flex;flex-direction:column;overflow:hidden;background:var(--cream)}
+    .chat-header{padding:.75rem 1.5rem;border-bottom:1px solid var(--border2);background:var(--white);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .chat-header-left{display:flex;align-items:center;gap:.85rem}
+    .ch-avatar{width:38px;height:38px;border-radius:10px;background:rgba(200,150,62,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+    .ch-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--brown)}
+    .ch-meta{font-size:.73rem;color:var(--muted);margin-top:1px}
+    .ch-action{background:none;border:1px solid var(--border);border-radius:8px;padding:.38rem .75rem;font-size:.75rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:.35rem}
+    .ch-action:hover{background:var(--warm);border-color:var(--gold);color:var(--brown)}
+    .messages-wrap{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.15rem}
+    .messages-wrap::-webkit-scrollbar{width:4px}
+    .messages-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .date-divider{display:flex;align-items:center;gap:.75rem;margin:1rem 0 .5rem}
+    .date-divider::before,.date-divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+    .date-divider span{font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    .msg-row{display:flex;align-items:flex-start;gap:.75rem;padding:.25rem 0;animation:msgin .2s ease-out}
+    @keyframes msgin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .msg-row.mine{flex-direction:row-reverse}
+    .msg-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.78rem;font-weight:700;color:var(--cream);flex-shrink:0;margin-top:2px}
+    .msg-body{max-width:68%}
+    .msg-row.mine .msg-body{align-items:flex-end;display:flex;flex-direction:column}
+    .msg-meta{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.25rem}
+    .msg-row.mine .msg-meta{flex-direction:row-reverse}
+    .msg-sender{font-size:.78rem;font-weight:600;color:var(--brown)}
+    .msg-time{font-size:.67rem;color:var(--muted)}
+    .msg-bubble{padding:.6rem .9rem;border-radius:14px;font-size:.875rem;line-height:1.55;color:var(--text);background:var(--white);border:1px solid var(--border2);word-break:break-word}
+    .msg-row.mine .msg-bubble{background:var(--brown);color:var(--cream);border-color:transparent}
+    .msg-row.pending .msg-bubble{opacity:.6}
+    .msg-status{font-size:.62rem;color:var(--muted);margin-top:3px}
+    .msg-status.sent{color:var(--gold)}
+    .msg-row.consecutive .msg-avatar{visibility:hidden}
+    .msg-row.consecutive{padding-top:.05rem}
+    .typing-indicator{display:flex;align-items:center;gap:.6rem;padding:.4rem 1.5rem .2rem;opacity:0;transition:opacity .2s;min-height:32px}
+    .typing-indicator.visible{opacity:1}
+    .typing-dots{display:flex;gap:3px;align-items:center}
+    .typing-dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bdot .9s ease-in-out infinite}
+    .typing-dots span:nth-child(2){animation-delay:.15s}
+    .typing-dots span:nth-child(3){animation-delay:.3s}
+    @keyframes bdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+    .typing-text{font-size:.75rem;color:var(--muted);font-style:italic}
+    .input-area{padding:.85rem 1.5rem 1rem;border-top:1px solid var(--border2);background:var(--white);flex-shrink:0}
+    .input-box{display:flex;align-items:flex-end;gap:.65rem;background:var(--cream);border:1.5px solid var(--border);border-radius:14px;padding:.55rem .55rem .55rem .9rem;transition:border-color .2s,box-shadow .2s}
+    .input-box:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,62,.08)}
+    .input-tool{background:none;border:none;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--muted);cursor:pointer;transition:all .2s}
+    .input-tool:hover{background:var(--warm);color:var(--brown)}
+    #msg-input{flex:1;background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--text);resize:none;max-height:130px;min-height:22px;line-height:1.5;padding:.15rem 0}
+    #msg-input::placeholder{color:var(--muted)}
+    .send-btn{width:38px;height:38px;border-radius:10px;background:var(--brown);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;color:var(--cream)}
+    .send-btn:hover{background:var(--gold);transform:scale(1.05)}
+    .send-btn:active{transform:scale(.96)}
+    .send-btn:disabled{opacity:.4;cursor:default;transform:none}
+    .input-hint{font-size:.68rem;color:var(--muted);margin-top:.45rem;padding:0 .25rem}
+    .emoji-picker{position:absolute;bottom:100%;left:0;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:.6rem;box-shadow:0 8px 32px rgba(59,42,26,.15);display:none;flex-wrap:wrap;gap:.25rem;width:220px;z-index:50}
+    .emoji-picker.open{display:flex}
+    .emoji-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;padding:.2rem;border-radius:6px;transition:background .15s;line-height:1}
+    .emoji-btn:hover{background:var(--warm)}
+    .members-panel{position:fixed;top:var(--topbar-h);right:0;bottom:0;width:240px;background:var(--white);border-left:1px solid var(--border2);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:90;display:flex;flex-direction:column}
+    .members-panel.open{transform:translateX(0)}
+    .members-panel-head{padding:1rem 1.1rem .6rem;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+    .members-panel-head h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--brown)}
+    .close-panel{background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:.2rem;border-radius:6px;transition:all .2s}
+    .close-panel:hover{color:var(--brown);background:var(--warm)}
+    .members-list{list-style:none;overflow-y:auto;flex:1;padding:.5rem 0}
+    .member-row{display:flex;align-items:center;gap:.65rem;padding:.55rem 1.1rem;transition:background .15s}
+    .member-row:hover{background:var(--warm)}
+    .m-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.75rem;font-weight:700;color:var(--cream);flex-shrink:0;position:relative}
+    .m-name{font-size:.82rem;color:var(--text);font-weight:500}
+    .m-role{font-size:.67rem;color:var(--muted)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(30,18,8,.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--white);border-radius:18px;padding:2rem;width:90%;max-width:420px;box-shadow:0 24px 64px rgba(59,42,26,.22);transform:translateY(16px) scale(.97);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+    .modal-overlay.open .modal{transform:translateY(0) scale(1)}
+    .modal h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;color:var(--brown);margin-bottom:.35rem}
+    .modal p{font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6}
+    .modal label{display:block;font-size:.78rem;font-weight:600;color:var(--brown);margin-bottom:.3rem;margin-top:.85rem}
+    .modal input,.modal select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:.62rem .9rem;font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--text);background:var(--cream);outline:none;transition:border-color .2s}
+    .modal input:focus,.modal select:focus{border-color:var(--gold)}
+    .modal-actions{display:flex;gap:.75rem;margin-top:1.5rem}
+    .modal-btn{flex:1;padding:.72rem;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s;border:2px solid var(--brown)}
+    .modal-btn.primary{background:var(--brown);color:var(--cream)}
+    .modal-btn.primary:hover{background:var(--gold);border-color:var(--gold)}
+    .modal-btn.secondary{background:transparent;color:var(--brown)}
+    .modal-btn.secondary:hover{background:var(--warm)}
+    .auth-overlay{position:fixed;inset:0;background:var(--cream);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;transition:opacity .5s}
+    .auth-overlay.hidden{opacity:0;pointer-events:none}
+    .auth-logo{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--brown);text-align:center;line-height:1.1}
+    .auth-logo span{display:block;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-top:.35rem}
+    .auth-card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:1.75rem;width:90%;max-width:380px;box-shadow:var(--shadow)}
+    .auth-tabs{display:flex;margin-bottom:1.25rem;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+    .auth-tab{flex:1;padding:.55rem;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+    .auth-tab.active{background:var(--brown);color:var(--cream)}
+    .auth-field{margin-bottom:.85rem}
+    .auth-field label{display:block;font-size:.75rem;font-weight:600;color:var(--brown);margin-bottom:.3rem}
+    .auth-field input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:.62rem .9rem;font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--text);background:var(--cream);outline:none;transition:border-color .2s}
+    .auth-field input:focus{border-color:var(--gold)}
+    .auth-submit{width:100%;padding:.78rem;border-radius:50px;border:none;background:var(--brown);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:.5rem}
+    .auth-submit:hover{background:var(--gold);transform:translateY(-1px)}
+    .auth-submit:disabled{opacity:.5;cursor:default;transform:none}
+    .err-box{font-size:.78rem;color:var(--rust);margin-top:.5rem;display:none;padding:.5rem .75rem;background:rgba(160,82,45,.08);border-radius:8px;border:1px solid rgba(160,82,45,.2)}
+    .err-box.show{display:block}
+    .avatar-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+    .avatar-pick{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.85rem;font-weight:700;color:var(--cream);cursor:pointer;border:2px solid transparent;transition:all .15s}
+    .avatar-pick:hover{transform:scale(1.1)}
+    .avatar-pick.selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+    .spinner-overlay{position:fixed;inset:0;background:var(--cream);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner-text{font-size:.85rem;color:var(--muted)}
+    .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;padding:2rem;text-align:center}
+    .empty-icon{font-size:2.8rem;opacity:.4}
+    .empty-state h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--brown);opacity:.6}
+    .empty-state p{font-size:.82rem;color:var(--muted);max-width:260px;line-height:1.6}
+    .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--brown);color:var(--cream);padding:.65rem 1.4rem;border-radius:50px;font-size:.82rem;font-weight:500;box-shadow:0 8px 24px rgba(59,42,26,.3);transition:transform .35s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;display:flex;align-items:center;gap:.5rem}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* ── MOBILE ── */
+    @media(max-width:720px){
+      :root{ --topbar-h:54px; }
+      .app{ grid-template-columns:1fr; grid-template-rows:var(--topbar-h) 1fr; }
+      .sidebar{ position:fixed; top:var(--topbar-h); left:0; bottom:0; width:100vw; transform:translateX(-100%); transition:transform .3s cubic-bezier(.4,0,.2,1); z-index:80; overflow-y:auto; }
+      .sidebar.open{ transform:translateX(0); }
+      .sidebar-list{ max-height:none !important; }
+      .room-item{ padding:.75rem 1.1rem; }
+      .room-avatar{ width:40px; height:40px; font-size:1.1rem; }
+      .r-name{ font-size:.88rem; }
+      .r-preview{ font-size:.75rem; }
+      .sidebar-profile{ padding:1rem 1.1rem; }
+      .chat-main{ grid-column:1; display:flex; flex-direction:column; height:calc(100vh - var(--topbar-h)); overflow:hidden; }
+      .topbar{ padding:0 .85rem; gap:.5rem; }
+      .topbar-center{ flex:1; min-width:0; overflow:hidden; }
+      .room-name{ font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .room-desc{ display:none; }
+      .topbar-right{ gap:.4rem; flex-shrink:0; }
+      .topbar-btn span:last-child{ display:none; }
+      .topbar-btn{ padding:.35rem .55rem; font-size:.8rem; border-radius:8px; }
+      .online-count{ display:none; }
+      .ham-btn{ display:flex; margin-right:.1rem; }
+      .chat-header{ padding:.6rem .9rem; }
+      .ch-avatar{ width:34px; height:34px; font-size:1rem; border-radius:8px; }
+      .ch-name{ font-size:.9rem; }
+      .ch-meta{ font-size:.68rem; }
+      .ch-action span:last-child{ display:none; }
+      .ch-action{ padding:.32rem .55rem; }
+      .messages-wrap{ padding:.75rem .9rem; gap:.1rem; }
+      .msg-body{ max-width:82%; }
+      .msg-bubble{ font-size:.835rem; padding:.5rem .78rem; }
+      .msg-avatar{ width:30px; height:30px; font-size:.72rem; }
+      .msg-sender{ font-size:.73rem; }
+      .msg-time{ font-size:.62rem; }
+      .typing-indicator{ padding:.3rem .9rem .15rem; }
+      .input-area{ padding:.6rem .9rem .75rem; }
+      .input-box{ border-radius:12px; padding:.45rem .45rem .45rem .75rem; }
+      #msg-input{ font-size:.835rem; }
+      .input-hint{ display:none; }
+      .send-btn{ width:36px; height:36px; border-radius:9px; }
+      .members-panel{ width:100vw; }
+      .auth-logo{ font-size:1.7rem; }
+      .auth-card{ padding:1.35rem; }
+      .modal{ padding:1.5rem; border-radius:14px; }
+      .modal h2{ font-size:1.1rem; }
+    }
+    @media(max-width:400px){
+      .topbar-btn{ display:none; }
+      #newRoomTopBtn{ display:flex !important; }
+      .msg-body{ max-width:90%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner"></div>
+  <div class="spinner-text">Loading MindStark CONNECT…</div>
+</div>
+
+<div class="auth-overlay" id="authOverlay" style="display:none">
+  <div class="auth-logo">MindStark CONNECT<span>Where readers meet</span></div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSI" onclick="switchTab('si')">Sign In</button>
+      <button class="auth-tab" id="tabSU" onclick="switchTab('su')">Create Account</button>
+    </div>
+    <div id="siForm">
+      <div class="auth-field"><label>Email</label><input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="siPass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="err-box" id="siErr"></div>
+      <button class="auth-submit" id="siBtn" onclick="doSignIn()">Sign In →</button>
+    </div>
+    <div id="suForm" style="display:none">
+      <div class="auth-field"><label>Full name</label><input type="text" id="suName" placeholder="e.g. Amara Okafor" maxlength="30"/></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="suPass" placeholder="Min. 6 characters" autocomplete="new-password"/></div>
+      <div class="auth-field"><label>Avatar colour</label><div class="avatar-row" id="avatarRow"></div></div>
+      <div class="err-box" id="suErr"></div>
+      <button class="auth-submit" id="suBtn" onclick="doSignUp()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appShell" style="display:none">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:.85rem">
+      <button class="ham-btn" id="hamBtn"><span></span><span></span><span></span></button>
+      <a class="topbar-logo" href="#"><span class="t-main">MindStark</span><span class="t-sub">Connect</span></a>
+    </div>
+    <div class="topbar-center">
+      <div id="tbAv" style="width:34px;height:34px;border-radius:10px;background:rgba(200,150,62,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem">📚</div>
+      <div><div class="room-name" id="tbName">—</div><div class="room-desc" id="tbDesc"></div></div>
+    </div>
+    <div class="topbar-right">
+      <div class="online-count"><div class="online-dot"></div><span id="onlineLabel">Online</span></div>
+      <button class="topbar-btn" id="membersToggleBtn"><span>👥</span><span>Members</span></button>
+      <button class="topbar-btn" id="newRoomTopBtn"><span>＋</span><span>New Room</span></button>
+      <button class="topbar-btn" onclick="doSignOut()"><span>↩</span><span>Sign Out</span></button>
+    </div>
+  </header>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-search"><input type="text" id="sbSearch" placeholder="🔍  Search rooms…"/></div>
+    <div class="sidebar-section"><div class="sidebar-label">Communities <button id="newRoomBtn">＋</button></div></div>
+    <ul class="sidebar-list" id="communityList" style="max-height:210px"></ul>
+    <div class="sidebar-section" style="margin-top:.35rem"><div class="sidebar-label">Direct Messages <button id="newDmBtn">＋</button></div></div>
+    <ul class="sidebar-list" id="dmList"></ul>
+    <div class="sidebar-profile">
+      <div class="profile-avatar" id="profAv" style="background:var(--rust)">?<div class="presence-ring"></div></div>
+      <div style="flex:1;min-width:0"><div class="profile-name" id="profName">You</div><div class="profile-status">● Online</div></div>
+    </div>
+  </aside>
+  <main class="chat-main">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="ch-avatar" id="chAv">📚</div>
+        <div><div class="ch-name" id="chName">Select a room</div><div class="ch-meta" id="chMeta">Choose from the sidebar</div></div>
+      </div>
+      <button class="ch-action" id="membersBtn"><span>👥</span><span>Members</span></button>
+    </div>
+    <div class="messages-wrap" id="msgsWrap">
+      <div class="empty-state"><div class="empty-icon">📚</div><h3>Welcome to MindStark CONNECT</h3><p>Select a room to start chatting with fellow readers.</p></div>
+    </div>
+    <div class="typing-indicator" id="typingInd">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <span class="typing-text" id="typingTxt">Someone is typing…</span>
+    </div>
+    <div class="input-area">
+      <div style="position:relative"><div class="emoji-picker" id="emojiPicker"></div></div>
+      <div class="input-box">
+        <button class="input-tool" id="emojiBtn">😊</button>
+        <textarea id="msg-input" rows="1" placeholder="Select a room to start messaging…" disabled></textarea>
+        <button class="send-btn" id="sendBtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Press <kbd style="background:var(--warm);padding:1px 5px;border-radius:4px;font-size:.65rem">Enter</kbd> to send &nbsp;·&nbsp; <kbd style="background:var(--warm);padding:1px 5px;border-radius:4px;font-size:.65rem">Shift+Enter</kbd> for new line</div>
+    </div>
+  </main>
+</div>
+
+<div class="members-panel" id="membersPanel">
+  <div class="members-panel-head"><h3>Members</h3><button class="close-panel" id="closeMbBtn">✕</button></div>
+  <ul class="members-list" id="membersList"></ul>
+</div>
+
+<div class="modal-overlay" id="newRoomModal">
+  <div class="modal">
+    <h2>Create a Room</h2>
+    <p>Start a new community channel or direct message.</p>
+    <label>Room name</label><input type="text" id="nrName" placeholder="e.g. Sci-Fi Readers" maxlength="30"/>
+    <label>Type</label>
+    <select id="nrType"><option value="community">Community (group channel)</option><option value="dm">Direct Message</option></select>
+    <label>Description (optional)</label><input type="text" id="nrDesc" placeholder="What's this room about?" maxlength="60"/>
+    <div class="err-box" id="nrErr"></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="cancelRoomBtn">Cancel</button>
+      <button class="modal-btn primary" id="confirmRoomBtn">Create Room</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://wgcpuohwyarhjlndmnlj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_aCM0iO7qCRXWSnnzzynAlA_mHRquGLQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    storageKey: 'mindstark-connect-auth',
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  }
+});
+
+const AV_COLORS = ['#3b2a1a','#a0522d','#4a6741','#2a4a6b','#5c3a5c','#c8963e'];
+const RM_EMOJIS = ['📚','🚀','🤔','🏛️','🌍','🎨','🧠','💎','🌟','📖'];
+const EMOJIS    = ['😊','😂','❤️','👍','🔥','📚','🤔','✨','👏','😍','🎉','💡','🌟','😎','🙌'];
+
+let S = {
+  user:null, profile:null, rooms:[], activeId:null,
+  messages:[], members:[], realtimeCh:null, presenceCh:null,
+  onlineUsers:new Set(), membersOpen:false,
+  selectedColor:AV_COLORS[0], tmpCount:0,
+};
+let _booted = false;
+
+const el  = id => document.getElementById(id);
+const esc = s  => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const mkInitials = n => n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+const fmtTime = ts => {
+  const d=new Date(ts); let h=d.getHours(), m=d.getMinutes();
+  const ap=h>=12?'PM':'AM'; h=h%12||12;
+  return `${h}:${m.toString().padStart(2,'0')} ${ap}`;
+};
+
+function toast(msg, icon='✓'){
+  const t=el('toast'); t.innerHTML=`<span>${icon}</span> ${msg}`;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3200);
+}
+function showErr(id, msg){
+  const e=el(id); e.textContent=msg; e.classList.add('show');
+  setTimeout(()=>e.classList.remove('show'), 5000);
+}
+function setSpinner(v){ el('spinnerOverlay').style.display = v ? 'flex' : 'none'; }
+function showAuth(){
+  setSpinner(false);
+  el('authOverlay').style.display = 'flex';
+  el('appShell').style.display    = 'none';
+  buildAvatarPicker();
+}
+
+/* ── AVATAR PICKER ── */
+function buildAvatarPicker(){
+  const row=el('avatarRow'); row.innerHTML='';
+  AV_COLORS.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='avatar-pick'+(i===0?' selected':'');
+    d.style.background=c; d.textContent='AB'[i%2]||'A';
+    d.onclick=()=>{
+      document.querySelectorAll('.avatar-pick').forEach(x=>x.classList.remove('selected'));
+      d.classList.add('selected'); S.selectedColor=c;
+    };
+    row.appendChild(d);
+  });
+}
+
+/* ── AUTH TABS ── */
+function switchTab(t){
+  el('tabSI').classList.toggle('active', t==='si');
+  el('tabSU').classList.toggle('active', t==='su');
+  el('siForm').style.display = t==='si' ? '' : 'none';
+  el('suForm').style.display = t==='su' ? '' : 'none';
+}
+
+async function doSignIn(){
+  const email=el('siEmail').value.trim(), pass=el('siPass').value;
+  if(!email||!pass){ showErr('siErr','Please fill in all fields.'); return; }
+  el('siBtn').disabled=true; el('siBtn').textContent='Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if(error){
+    showErr('siErr', error.message);
+    el('siBtn').disabled=false; el('siBtn').textContent='Sign In →';
+  }
+  // On success, onAuthStateChange SIGNED_IN fires → startApp()
+}
+
+async function doSignUp(){
+  const name=el('suName').value.trim(), email=el('suEmail').value.trim(), pass=el('suPass').value;
+  if(!name||!email||!pass){ showErr('suErr','Please fill in all fields.'); return; }
+  if(pass.length<6){ showErr('suErr','Password must be at least 6 characters.'); return; }
+  el('suBtn').disabled=true; el('suBtn').textContent='Creating account…';
+  const { data, error } = await sb.auth.signUp({ email, password:pass });
+  if(error){
+    showErr('suErr', error.message);
+    el('suBtn').disabled=false; el('suBtn').textContent='Create Account →';
+    return;
+  }
+  if(data.user){
+    await sb.from('connect_profiles').upsert({
+      id: data.user.id, username:name, initials:mkInitials(name),
+      avatar_color:S.selectedColor, is_online:true
+    });
+    toast('Account created! Sign in to continue.','📚');
+    switchTab('si');
+  }
+  el('suBtn').disabled=false; el('suBtn').textContent='Create Account →';
+}
+
+async function doSignOut(){
+  _booted = false;
+  if(S.profile) await sb.from('connect_profiles').update({is_online:false}).eq('id',S.user.id);
+  if(S.presenceCh) try{ await S.presenceCh.untrack(); }catch(e){}
+  await sb.auth.signOut();
+  // SIGNED_OUT event fires → location.reload()
+}
+
+/* ══════════════════════════════════════════════════
+   THE CORRECT AUTH BOOT PATTERN FOR SUPABASE v2
+   
+   Problem: onAuthStateChange fires ASYNC and can be
+   delayed on refresh, causing infinite spinner.
+   
+   Fix: ALWAYS call getSession() first — it reads
+   from localStorage SYNCHRONOUSLY and never hangs.
+   onAuthStateChange then only handles live events.
+══════════════════════════════════════════════════ */
+
+async function startApp(session){
+  if(!session?.user){ showAuth(); return; }
+  // Guard: don't boot twice for the same user
+  if(_booted && S.user?.id === session.user.id) return;
+
+  S.user = session.user;
+  setSpinner(true);
+
+  try {
+    await loadProfile();
+    if(!_booted){
+      _booted = true;
+      await bootApp();
+    }
+  } catch(err){
+    console.error('Boot error:', err);
+    _booted = false;
+    toast('Something went wrong. Please sign in again.','⚠️');
+    showAuth();
+  } finally {
+    setSpinner(false);
+  }
+}
+
+// ── STEP 1: On every page load, check session immediately ──
+// getSession() reads localStorage — instant, never hangs.
+(async () => {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    await startApp(session);
+  } catch(err){
+    console.error('getSession failed:', err);
+    showAuth();
+  }
+})();
+
+// ── STEP 2: Listen for live auth events after load ──
+// SIGNED_IN  → user just submitted the login form
+// SIGNED_OUT → doSignOut() was called
+// TOKEN_REFRESHED → session renewed silently, do nothing extra
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN')       { await startApp(session); }
+  if(event === 'SIGNED_OUT')      { _booted=false; S.user=null; S.profile=null; location.reload(); }
+  // INITIAL_SESSION is handled by getSession() above — ignore it here
+});
+
+/* ── PROFILE ── */
+async function loadProfile(){
+  const { data, error } = await sb.from('connect_profiles').select('*').eq('id',S.user.id).single();
+  if(error && error.code !== 'PGRST116') throw error; // PGRST116 = row not found, that's ok
+
+  if(!data){
+    const name = S.user.email.split('@')[0];
+    const p = { id:S.user.id, username:name, initials:mkInitials(name), avatar_color:AV_COLORS[0], is_online:true };
+    await sb.from('connect_profiles').upsert(p);
+    S.profile = p;
+  } else {
+    S.profile = data;
+    await sb.from('connect_profiles').update({ is_online:true }).eq('id', S.user.id);
+  }
+  el('profName').textContent      = S.profile.username;
+  el('profAv').style.background   = S.profile.avatar_color;
+  el('profAv').innerHTML          = esc(S.profile.initials)+'<div class="presence-ring"></div>';
+}
+
+/* ── BOOT APP ── */
+async function bootApp(){
+  el('authOverlay').style.display = 'none';
+  el('appShell').style.display    = '';
+  try { await loadRooms(); } catch(e){ console.error('loadRooms failed:', e); }
+  setupPresence();
+  if(S.rooms.length > 0) await selectRoom(S.rooms[0].id);
+}
+
+/* ── ROOMS ── */
+async function loadRooms(){
+  const { data, error } = await sb.from('connect_rooms').select('*').order('created_at',{ascending:true});
+  if(error) throw error;
+  if(!data || data.length === 0){
+    await sb.from('connect_rooms').insert([
+      {name:'Book Club',      type:'community', emoji:'📚', description:'General reading discussions', created_by:S.user.id},
+      {name:'Sci-Fi Corner',  type:'community', emoji:'🚀', description:'Science fiction enthusiasts', created_by:S.user.id},
+      {name:'Philosophy Hub', type:'community', emoji:'🤔', description:'Deep thoughts & great books',  created_by:S.user.id},
+      {name:'Classic Lit',    type:'community', emoji:'🏛️', description:'Timeless literature',          created_by:S.user.id},
+    ]);
+    const { data:d2 } = await sb.from('connect_rooms').select('*').order('created_at',{ascending:true});
+    S.rooms = d2 || [];
+  } else {
+    S.rooms = data;
+  }
+  renderSidebar();
+}
+
+async function selectRoom(id){
+  S.activeId=id; S.messages=[];
+  if(S.realtimeCh){ await sb.removeChannel(S.realtimeCh); S.realtimeCh=null; }
+  renderSidebar(); updateTopbar(); renderMessages();
+  try {
+    await Promise.all([loadMessages(id), loadMembers(id)]);
+    subscribeRoom(id);
+    el('sidebar').classList.remove('open');
+    const r = S.rooms.find(x=>x.id===id);
+    el('msg-input').disabled    = false;
+    el('msg-input').placeholder = `Message ${r?.name||''}…`;
+  } catch(e){ console.error('selectRoom error:', e); }
+}
+
+/* ── MESSAGES ── */
+async function loadMessages(roomId){
+  const { data, error } = await sb.from('connect_messages')
+    .select('*').eq('room_id',roomId).order('created_at',{ascending:true}).limit(100);
+  if(error) throw error;
+  S.messages = data || [];
+  renderMessages();
+}
+
+function renderMessages(){
+  const wrap=el('msgsWrap'); wrap.innerHTML='';
+  if(!S.activeId){
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><h3>Welcome to MindStark CONNECT</h3><p>Select a room to start chatting.</p></div>';
+    return;
+  }
+  if(!S.messages.length){
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p></div>';
+    return;
+  }
+  wrap.insertAdjacentHTML('beforeend','<div class="date-divider"><span>Today</span></div>');
+  S.messages.forEach((msg,i)=>{
+    const isMe   = msg.user_id === S.user?.id;
+    const prev   = i>0 ? S.messages[i-1] : null;
+    const consec = prev && prev.user_id === msg.user_id;
+    const color  = isMe ? (S.profile?.avatar_color||'#3b2a1a') : (msg.sender_color||'#3b2a1a');
+    const inits  = isMe ? (S.profile?.initials||'?')           : (msg.sender_initials||'?');
+    const sender = isMe ? (S.profile?.username||'You')         : (msg.sender_name||'User');
+    const row    = document.createElement('div');
+    row.className = `msg-row${isMe?' mine':''}${consec?' consecutive':''}${msg._pending?' pending':''}`;
+    row.innerHTML = `
+      <div class="msg-avatar" style="background:${color}">${esc(inits)}</div>
+      <div class="msg-body">
+        ${!consec?`<div class="msg-meta"><span class="msg-sender">${esc(sender)}</span><span class="msg-time">${fmtTime(msg.created_at)}</span></div>`:''}
+        <div class="msg-bubble">${esc(msg.content)}</div>
+        ${isMe?`<div class="msg-status${msg._pending?'':' sent'}">${msg._pending?'⌛ Sending…':'✓ Sent'}</div>`:''}
+      </div>`;
+    wrap.appendChild(row);
+  });
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function sendMessage(){
+  const input=el('msg-input'), text=input.value.trim();
+  if(!text||!S.activeId) return;
+  const tid = 'tmp_'+(++S.tmpCount);
+  const opt = {
+    id:tid, room_id:S.activeId, user_id:S.user.id,
+    sender_name:S.profile?.username||'You',
+    sender_initials:S.profile?.initials||'?',
+    sender_color:S.profile?.avatar_color||'#3b2a1a',
+    content:text, created_at:new Date().toISOString(), _pending:true
+  };
+  S.messages.push(opt);
+  input.value=''; input.style.height='';
+  el('sendBtn').disabled=true;
+  renderMessages();
+
+  const { data, error } = await sb.from('connect_messages').insert({
+    room_id:S.activeId, user_id:S.user.id,
+    sender_name:S.profile?.username||'You',
+    sender_initials:S.profile?.initials||'?',
+    sender_color:S.profile?.avatar_color||'#3b2a1a',
+    content:text,
+  }).select().single();
+
+  const idx = S.messages.findIndex(m=>m.id===tid);
+  if(idx !== -1){
+    if(error){ S.messages.splice(idx,1); toast('Failed to send.','⚠️'); }
+    else S.messages[idx] = data;
+    renderMessages();
+  }
+}
+
+/* ── REALTIME ── */
+function subscribeRoom(roomId){
+  S.realtimeCh = sb.channel(`room:${roomId}`)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'connect_messages',filter:`room_id=eq.${roomId}`},
+      payload => {
+        const msg = payload.new;
+        const dup = S.messages.some(m=>m.id===msg.id||(m._pending&&m.content===msg.content&&m.user_id===msg.user_id));
+        if(!dup){ S.messages.push(msg); renderMessages(); renderSidebar(); }
+      })
+    .subscribe();
+}
+
+/* ── MEMBERS ── */
+async function loadMembers(roomId){
+  const { data } = await sb.from('connect_messages')
+    .select('user_id,sender_name,sender_initials,sender_color').eq('room_id',roomId);
+  if(!data){ S.members=[]; renderMembers(); return; }
+  const seen = new Set();
+  S.members = data.filter(m=>{ if(seen.has(m.user_id)) return false; seen.add(m.user_id); return true; });
+  if(!S.members.find(m=>m.user_id===S.user?.id)){
+    S.members.unshift({user_id:S.user.id, sender_name:S.profile?.username||'You',
+      sender_initials:S.profile?.initials||'?', sender_color:S.profile?.avatar_color||'#3b2a1a'});
+  }
+  renderMembers();
+}
+
+function renderMembers(){
+  const list=el('membersList'); list.innerHTML='';
+  if(!S.members.length){
+    list.innerHTML='<li style="padding:1rem;font-size:.8rem;color:var(--muted);text-align:center">No members yet</li>';
+    return;
+  }
+  S.members.forEach(m=>{
+    const isMe   = m.user_id===S.user?.id;
+    const online = S.onlineUsers.has(m.user_id)||isMe;
+    const li     = document.createElement('li'); li.className='member-row';
+    li.innerHTML = `
+      <div class="m-avatar" style="background:${m.sender_color||'#3b2a1a'}">${esc(m.sender_initials||'?')}
+        <div style="position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;border:2px solid var(--white);background:${online?'#5cb85c':'#aaa'}"></div>
+      </div>
+      <div>
+        <div class="m-name">${esc(m.sender_name||'User')}${isMe?' <span style="font-size:.65rem;color:var(--gold)">(you)</span>':''}</div>
+        <div class="m-role">${online?'Online':'Offline'}</div>
+      </div>`;
+    list.appendChild(li);
+  });
+}
+
+/* ── PRESENCE ── */
+function setupPresence(){
+  const ch = sb.channel('connect_presence');
+  ch.on('presence',{event:'sync'},()=>{
+    const ps = ch.presenceState(); S.onlineUsers.clear();
+    Object.values(ps).flat().forEach(p=>{ if(p.user_id) S.onlineUsers.add(p.user_id); });
+    el('onlineLabel').textContent = `${S.onlineUsers.size} online`;
+    renderMembers();
+  }).subscribe(async status=>{
+    if(status==='SUBSCRIBED') await ch.track({ user_id:S.user.id });
+  });
+  S.presenceCh = ch;
+  window.addEventListener('beforeunload', async()=>{
+    try {
+      await sb.from('connect_profiles').update({is_online:false}).eq('id',S.user.id);
+      await ch.untrack();
+    } catch(e){}
+  });
+}
+
+/* ── SIDEBAR ── */
+function renderSidebar(){
+  const q = (el('sbSearch').value||'').toLowerCase();
+  const communities = S.rooms.filter(r=>r.type==='community'&&(!q||r.name.toLowerCase().includes(q)));
+  const dms         = S.rooms.filter(r=>r.type==='dm'       &&(!q||r.name.toLowerCase().includes(q)));
+  const cl=el('communityList'); cl.innerHTML='';
+  communities.forEach(r=>cl.appendChild(mkRoomItem(r)));
+  const dl=el('dmList'); dl.innerHTML='';
+  dms.forEach(r=>dl.appendChild(mkRoomItem(r)));
+}
+
+function mkRoomItem(room){
+  const active  = room.id===S.activeId;
+  const lastMsg = active && S.messages.length ? S.messages[S.messages.length-1] : null;
+  const preview = lastMsg ? lastMsg.content : (room.description||'No messages yet');
+  const li = document.createElement('li'); li.className='room-item'+(active?' active':'');
+  li.innerHTML = `
+    <div class="room-avatar">${room.emoji||'💬'}</div>
+    <div class="room-meta">
+      <div class="r-name">${esc(room.name)}</div>
+      <div class="r-preview">${esc((preview||'').substring(0,40))}${(preview||'').length>40?'…':''}</div>
+    </div>
+    <div style="flex-shrink:0"><span class="r-time">${lastMsg?fmtTime(lastMsg.created_at):''}</span></div>`;
+  li.onclick = ()=>selectRoom(room.id);
+  return li;
+}
+
+function updateTopbar(){
+  const r=S.rooms.find(x=>x.id===S.activeId); if(!r) return;
+  el('tbAv').textContent  = r.emoji||'💬';
+  el('tbName').textContent = r.name;
+  el('tbDesc').textContent = r.description||'';
+  el('chAv').textContent  = r.emoji||'💬';
+  el('chName').textContent = r.name;
+  el('chMeta').textContent = r.description||'';
+}
+
+/* ── CREATE ROOM ── */
+async function createRoom(){
+  const name=el('nrName').value.trim();
+  if(!name){ el('nrName').focus(); return; }
+  el('confirmRoomBtn').disabled=true; el('confirmRoomBtn').textContent='Creating…';
+  const { data, error } = await sb.from('connect_rooms').insert({
+    name, type:el('nrType').value,
+    emoji: RM_EMOJIS[Math.floor(Math.random()*RM_EMOJIS.length)],
+    description:el('nrDesc').value.trim(), created_by:S.user.id,
+  }).select().single();
+  el('confirmRoomBtn').disabled=false; el('confirmRoomBtn').textContent='Create Room';
+  if(error){ showErr('nrErr',error.message); return; }
+  S.rooms.push(data); closeRoomModal(); renderSidebar();
+  await selectRoom(data.id); toast(`"${name}" created!`,'🎉');
+}
+
+/* ── INPUT ── */
+const msgInput=el('msg-input');
+msgInput.addEventListener('input',function(){
+  this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,130)+'px';
+  el('sendBtn').disabled=!this.value.trim()||!S.activeId;
+});
+msgInput.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); if(!el('sendBtn').disabled) sendMessage(); }
+});
+el('sendBtn').addEventListener('click',sendMessage);
+
+/* ── EMOJI ── */
+(function(){
+  const p=el('emojiPicker');
+  EMOJIS.forEach(e=>{
+    const b=document.createElement('button'); b.className='emoji-btn'; b.textContent=e;
+    b.onclick=()=>{ msgInput.value+=e; msgInput.dispatchEvent(new Event('input')); p.classList.remove('open'); msgInput.focus(); };
+    p.appendChild(b);
+  });
+})();
+el('emojiBtn').onclick=ev=>{ ev.stopPropagation(); el('emojiPicker').classList.toggle('open'); };
+document.addEventListener('click',()=>el('emojiPicker').classList.remove('open'));
+
+/* ── MEMBERS PANEL ── */
+function toggleMembers(v){
+  S.membersOpen = v!==undefined ? v : !S.membersOpen;
+  el('membersPanel').classList.toggle('open', S.membersOpen);
+  el('membersToggleBtn').classList.toggle('active', S.membersOpen);
+}
+el('membersBtn').onclick       = ()=>toggleMembers();
+el('membersToggleBtn').onclick = ()=>toggleMembers();
+el('closeMbBtn').onclick       = ()=>toggleMembers(false);
+
+/* ── ROOM MODAL ── */
+function openRoomModal(){
+  el('newRoomModal').classList.add('open');
+  el('nrName').value=''; el('nrDesc').value=''; el('nrErr').classList.remove('show');
+  setTimeout(()=>el('nrName').focus(), 300);
+}
+function closeRoomModal(){ el('newRoomModal').classList.remove('open'); }
+el('newRoomBtn').onclick     = openRoomModal;
+el('newDmBtn').onclick       = openRoomModal;
+el('newRoomTopBtn').onclick  = openRoomModal;
+el('cancelRoomBtn').onclick  = closeRoomModal;
+el('newRoomModal').onclick   = e=>{ if(e.target===el('newRoomModal')) closeRoomModal(); };
+el('confirmRoomBtn').onclick = createRoom;
+el('nrName').addEventListener('keydown',e=>{ if(e.key==='Enter') createRoom(); });
+
+/* ── MISC ── */
+el('hamBtn').onclick = ()=>el('sidebar').classList.toggle('open');
+el('sbSearch').addEventListener('input', renderSidebar);
+el('siPass').addEventListener('keydown',e=>{ if(e.key==='Enter') doSignIn(); });
+el('suPass').addEventListener('keydown',e=>{ if(e.key==='Enter') doSignUp(); });
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); el('sbSearch').focus(); }
+  if(e.key==='Escape'){ closeRoomModal(); toggleMembers(false); el('sidebar').classList.remove('open'); }
+});
+</script>
+</body>
+</html>
