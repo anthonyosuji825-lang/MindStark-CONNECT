@@ -1586,10 +1586,18 @@ function myRole(roomId){return S.myMemberships[roomId]?.role||null}
 function isAdmin(roomId){return myRole(roomId)==='admin'}
 
 async function loadRoomMembers(roomId){
-  const{data}=await sb.from('connect_room_members')
-    .select('*, connect_profiles(username,initials,avatar_color)')
-    .eq('room_id',roomId);
-  S.allRoomMembers[roomId]=data||[];
+  try{
+    // Use raw fetch to guarantee apikey header is always sent
+    const url=SUPABASE_URL+'/rest/v1/connect_room_members?select=*,connect_profiles(username,initials,avatar_color)&room_id=eq.'+roomId;
+    const session=await sb.auth.getSession();
+    const token=session?.data?.session?.access_token||SUPABASE_KEY;
+    const res=await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'}});
+    const data=res.ok?await res.json():[];
+    S.allRoomMembers[roomId]=data||[];
+  }catch(e){
+    console.error('loadRoomMembers error:',e);
+    S.allRoomMembers[roomId]=[];
+  }
   return S.allRoomMembers[roomId];
 }
 
