@@ -423,7 +423,7 @@
     .avatar-pick{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;color:var(--cream);cursor:pointer;border:2px solid transparent;transition:all .14s}
     .avatar-pick:hover{transform:scale(1.1)}
     .avatar-pick.selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
-    .profile-modal-av{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--cream);margin:0 auto .9rem}
+    .profile-modal-av{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--cream);margin:0 auto .9rem;position:relative;overflow:hidden;flex-shrink:0}
     .profile-modal-email{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:1.1rem}
     .status-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.45rem}
     .status-pick{padding:.28rem .68rem;border-radius:50px;border:1.5px solid var(--border);font-size:.72rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .14s;background:none;font-family:'DM Sans',sans-serif}
@@ -820,7 +820,7 @@
       border:1px solid rgba(200,150,62,.16);border-radius:14px;
       padding:.9rem 1.25rem;margin-bottom:1.25rem;
     }
-    .pm-profile-hero .profile-modal-av{margin:0;width:52px;height:52px;font-size:1.1rem;flex-shrink:0}
+    .pm-profile-hero .profile-modal-av{margin:0;width:52px;height:52px;font-size:1.1rem;flex-shrink:0;position:relative;overflow:hidden}
     .pm-hero-name{font-size:.9rem;font-weight:700;color:var(--brown);margin-bottom:1px}
     .pm-profile-hero .profile-modal-email{margin:0;font-size:.72rem}
 
@@ -1585,9 +1585,38 @@ async function loadProfile(){
     const p={id:S.user.id,username:name,initials:mkInitials(name),avatar_color:AV_COLORS[0],is_online:true};
     await sb.from('connect_profiles').upsert(p);S.profile=p;
   }else{S.profile=data;await sb.from('connect_profiles').update({is_online:true}).eq('id',S.user.id)}
+
+  // Fetch profile picture from Library's profiles table (shared Supabase project)
+  try{
+    const{data:libProfile}=await sb.from('profiles').select('avatar_url').eq('id',S.user.id).single();
+    if(libProfile?.avatar_url) S.profile.avatar_url=libProfile.avatar_url;
+  }catch(e){}
+
+  // Also check sessionStorage in case Library already loaded it this session
+  if(!S.profile.avatar_url){
+    try{
+      const msUser=JSON.parse(sessionStorage.getItem('ms_current_user')||'null');
+      if(msUser?.avatar) S.profile.avatar_url=msUser.avatar;
+    }catch(e){}
+  }
+
   el('profName').textContent=S.profile.username;
-  el('profAv').style.background=S.profile.avatar_color;
-  el('profAv').innerHTML=esc(S.profile.initials)+'<div class="presence-ring"></div>';
+  renderProfileAvatar();
+}
+
+function renderProfileAvatar(){
+  const av=el('profAv');
+  if(S.profile?.avatar_url){
+    av.style.background='transparent';
+    av.innerHTML=`<img src="${esc(S.profile.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove();renderProfileAvatarFallback()"><div class="presence-ring"></div>`;
+  }else{
+    renderProfileAvatarFallback();
+  }
+}
+function renderProfileAvatarFallback(){
+  const av=el('profAv');
+  av.style.background=S.profile?.avatar_color||'var(--rust)';
+  av.innerHTML=esc(S.profile?.initials||'?')+'<div class="presence-ring"></div>';
 }
 async function bootApp(){
   el('authOverlay').style.display='none';el('appShell').style.display='';
@@ -1679,7 +1708,7 @@ async function leaveRoom(){
   delete S.myMemberships[S.activeId];
   toast(`Left "${room?.name||'room'}"`, '🚪');
   toggleMembers(false);
-  S.activeId=null;S.messages=[];
+  S.activeId=null;S.messages=[];S.msgPageOffset=0;S.msgHasMore=false;
   renderSidebar();
   el('msg-input').disabled=true;el('sendBtn').disabled=true;
   el('msg-input').placeholder='Select a room to start messaging…';
@@ -1723,7 +1752,7 @@ async function selectRoom(id){
   }
 
   // Joined — show chat
-  S.messages=[];S.unread[id]=0;
+  S.messages=[];S.msgPageOffset=0;S.msgHasMore=false;S.unread[id]=0;
   cancelReply();
   if(S.realtimeCh){await sb.removeChannel(S.realtimeCh);S.realtimeCh=null}
   renderSidebar();renderMessages();
@@ -1822,22 +1851,69 @@ async function handleJoinClick(roomId){
 
 async function loadRoomMembersForChat(roomId){
   const data=await loadRoomMembers(roomId);
-  // Also populate S.members for mentions / receipts
+
+  // Fetch avatar_url for all members from Library profiles table
+  const userIds=data.map(m=>m.user_id).filter(Boolean);
+  let avatarMap={};
+  if(userIds.length){
+    try{
+      const{data:libProfiles}=await sb.from('profiles').select('id,avatar_url').in('id',userIds);
+      if(libProfiles)libProfiles.forEach(p=>{if(p.avatar_url)avatarMap[p.id]=p.avatar_url;});
+    }catch(e){}
+  }
+
+  // Populate S.members with avatar_url included
   S.members=data.map(m=>({
     user_id:m.user_id,
     sender_name:m.connect_profiles?.username||'User',
     sender_initials:m.connect_profiles?.initials||'?',
     sender_color:m.connect_profiles?.avatar_color||'#3b2a1a',
+    sender_avatar_url:avatarMap[m.user_id]||null,
     role:m.role,
   }));
+
+  // Also attach avatar_url to allRoomMembers for renderMembers()
+  if(S.allRoomMembers[roomId]){
+    S.allRoomMembers[roomId]=S.allRoomMembers[roomId].map(m=>({
+      ...m,
+      _avatar_url:avatarMap[m.user_id]||null,
+    }));
+  }
   renderMembers();
 }
 
+const MSG_PAGE=50;
 async function loadMessages(roomId){
-  const{data,error}=await sb.from('connect_messages').select('*').eq('room_id',roomId).order('created_at',{ascending:true}).limit(100);
+  // Load latest 50 messages — newest first, then reverse for display
+  const{data,error}=await sb.from('connect_messages').select('*').eq('room_id',roomId).order('created_at',{ascending:false}).limit(MSG_PAGE);
   if(error)throw error;
-  S.messages=data||[];
+  S.messages=(data||[]).reverse();
+  S.msgPageOffset=S.messages.length;
+  S.msgHasMore=data&&data.length===MSG_PAGE;
   renderMessages();
+  // Scroll to bottom on initial load
+  const wrap=el('msgsWrap');
+  setTimeout(()=>{wrap.scrollTop=wrap.scrollHeight;},50);
+}
+
+async function loadMoreMessages(){
+  if(!S.activeId||!S.msgHasMore)return;
+  const btn=el('loadMoreBtn');
+  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  const wrap=el('msgsWrap');
+  const prevHeight=wrap.scrollHeight;
+  const{data,error}=await sb.from('connect_messages').select('*')
+    .eq('room_id',S.activeId)
+    .order('created_at',{ascending:false})
+    .range(S.msgPageOffset, S.msgPageOffset+MSG_PAGE-1);
+  if(error){toast('Could not load messages.','⚠️');if(btn){btn.disabled=false;btn.textContent='Load earlier messages';}return;}
+  const older=(data||[]).reverse();
+  S.messages=[...older,...S.messages];
+  S.msgPageOffset+=older.length;
+  S.msgHasMore=older.length===MSG_PAGE;
+  renderMessages();
+  // Maintain scroll position so user stays at same message
+  setTimeout(()=>{wrap.scrollTop=wrap.scrollHeight-prevHeight;},0);
 }
 
 function playNotif(){
@@ -1850,6 +1926,14 @@ function renderMessages(){
   const wrap=el('msgsWrap');wrap.innerHTML='';
   if(!S.activeId){return}
   if(!S.messages.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p></div>';return}
+
+  // Show "Load earlier messages" button if more exist
+  if(S.msgHasMore){
+    wrap.insertAdjacentHTML('afterbegin',
+      '<div style="text-align:center;padding:.75rem 0">' +
+      '<button id="loadMoreBtn" onclick="loadMoreMessages()" style="background:rgba(200,150,62,.1);border:1px solid rgba(200,150,62,.25);color:var(--gold);padding:.4rem 1.1rem;border-radius:50px;font-size:.75rem;font-family:DM Sans,sans-serif;cursor:pointer;transition:all .2s">↑ Load earlier messages</button></div>'
+    );
+  }
 
   let lastLabel='';
   S.messages.forEach((msg,i)=>{
@@ -1893,7 +1977,7 @@ function renderMessages(){
     row.className=`msg-row${isMe?' mine':''}${consec?' consecutive':''}${msg._pending?' pending':''}${mentionsMe&&!isMe?' self-mentioned':''}`;
     row.dataset.msgId=msg.id;
     row.innerHTML=`
-      <div class="msg-avatar" style="background:${color}">${esc(inits)}${!consec?crownHtml:''}</div>
+      <div class="msg-avatar" style="background:${color}">${isMe&&S.profile?.avatar_url?`<img src="${esc(S.profile.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:(msg.sender_avatar_url?`<img src="${esc(msg.sender_avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">`:'') }${!consec?crownHtml:''}${isMe&&S.profile?.avatar_url?'':(msg.sender_avatar_url?'':`${esc(inits)}`)}</div>
       <div class="msg-body">
         ${!consec?`<div class="msg-meta"><span class="msg-sender">${esc(sender)}${senderRole==='admin'?' <span style="font-size:.6rem;color:var(--gold);font-weight:700">Admin</span>':senderRole==='moderator'?' <span style="font-size:.6rem;color:#4fc3f7;font-weight:700">Mod</span>':''}</span><span class="msg-time">${fmtTime(msg.created_at)}</span></div>`:''}
         <div class="msg-bubble" id="bubble-${msg.id}">
@@ -2033,12 +2117,17 @@ function showTyping(roomId){
 function broadcastTyping(){if(!S.realtimeCh||!S.activeId)return;S.realtimeCh.send({type:'broadcast',event:'typing',payload:{user_id:S.user.id,name:S.profile?.username||'Someone'}})}
 
 // ════ SEND MESSAGE ════
+// Rate limit: max 1 message per second
+let _lastSentAt = 0;
 async function sendMessage(){
   const input=el('msg-input'),text=input.value.trim();
   if(!text||!S.activeId||!isJoined(S.activeId))return;
+  const now=Date.now();
+  if(now-_lastSentAt<1000){toast('Slow down a bit! ✋','⚠️');return;}
+  _lastSentAt=now;
   const tid='tmp_'+(++S.tmpCount);
   const replyData=S.replyTo?{reply_to_id:S.replyTo.id,reply_to_sender:S.replyTo.sender,reply_to_content:S.replyTo.content}:{};
-  S.messages.push({id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',content:text,created_at:new Date().toISOString(),_pending:true,...replyData});
+  S.messages.push({id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',sender_avatar_url:S.profile?.avatar_url||null,content:text,created_at:new Date().toISOString(),_pending:true,...replyData});
   input.value='';input.style.height='';el('sendBtn').disabled=true;
   cancelReply();renderMessages();
   const{data,error}=await sb.from('connect_messages').insert({room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',content:text,...replyData}).select().single();
@@ -2370,7 +2459,32 @@ function openProfileModal(){
   pmSelectedColor=S.profile?.avatar_color||AV_COLORS[0];pmSelectedStatus=S.profile?.status||'Online';
   const uname=S.profile?.username||'';const email=S.user?.email||'';
   el('pmName').value=uname;el('pmEmail').textContent=email;
-  el('pmAv').textContent=S.profile?.initials||'?';el('pmAv').style.background=pmSelectedColor;
+
+  // Show profile photo if available, else initials
+  const pmAv=el('pmAv');
+  if(S.profile?.avatar_url){
+    pmAv.style.background='transparent';
+    pmAv.innerHTML='<img src="'+S.profile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">';
+  }else{
+    pmAv.innerHTML='';pmAv.textContent=S.profile?.initials||'?';pmAv.style.background=pmSelectedColor;
+  }
+
+  // Hide avatar colour picker if user has a profile photo (it's irrelevant)
+  const avatarSection=el('pmAvatarRow')?.closest('.pm-field')||el('pmAvatarRow')?.parentElement;
+  if(avatarSection){
+    avatarSection.style.display=S.profile?.avatar_url?'none':'';
+  }
+
+  // Show Library photo note
+  let libNote=document.getElementById('pmLibNote');
+  if(!libNote){
+    libNote=document.createElement('p');
+    libNote.id='pmLibNote';
+    libNote.style.cssText='font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:center';
+    libNote.innerHTML='📷 To update your photo, visit <a href="https://mind-stark-library.vercel.app/profile.html" target="_blank" style="color:var(--gold);text-decoration:none">MindStark Library</a>';
+    pmAv.parentElement?.appendChild(libNote);
+  }
+
   // Sync nav sidebar header
   const navAv=el('pmNavAv');if(navAv){navAv.textContent=S.profile?.initials||'?';navAv.style.background=pmSelectedColor}
   const navName=el('pmNavName');if(navName)navName.textContent=uname||'You';
@@ -2391,7 +2505,7 @@ async function saveProfile(){
   el('pmSaveBtn').disabled=false;el('pmSaveBtn').textContent='Save changes';
   if(error){showErr('pmErr',error.message);return}
   S.profile={...S.profile,...updates};
-  el('profName').textContent=name;el('profAv').style.background=pmSelectedColor;el('profAv').innerHTML=esc(mkInitials(name))+'<div class="presence-ring"></div>';
+  el('profName').textContent=name;S.profile.username=name;S.profile.initials=mkInitials(name);S.profile.avatar_color=pmSelectedColor;renderProfileAvatar();
   const dot=pmSelectedStatus==='Online'?'●':pmSelectedStatus==='Away'?'◐':pmSelectedStatus==='Do not disturb'?'⊘':'○';
   el('profStatus').textContent=`${dot} ${pmSelectedStatus}`;
   /* Re-track presence with updated name/initials so members panel reflects changes immediately */
@@ -2527,10 +2641,11 @@ function renderMembers(){
         :'';
     const dotColor=online?'#3ecf6e':'#888';
     const dotGlow=online?';box-shadow:0 0 5px rgba(62,207,110,.5)':'';
+    const avatarUrl=isMe?(S.profile?.avatar_url||null):(m._avatar_url||null);
     const li=document.createElement('li');li.className='member-row';
     if(!isMe){li.style.cursor='pointer';li.onclick=()=>openMemberActionModal(m,S.activeId);}
     li.innerHTML=
-      '<div class=\"m-avatar\" style=\"background:'+(p.avatar_color||'#3b2a1a')+';position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15)\">'+(p.initials||'?')+(p.initials||'?')+
+      '<div class="m-avatar" style="background:'+(p.avatar_color||'#3b2a1a')+';position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15)">'+(avatarUrl?'<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0" onerror="this.remove()">':((p.initials||'?')))+
       '<div style="position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;border:2px solid var(--white);background:'+dotColor+dotGlow+'"></div></div>'+
       '<div class="m-info" style="flex:1;min-width:0">'+
         '<div style="font-size:.81rem;font-weight:500;color:'+(online?'var(--text)':'var(--muted)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
@@ -3905,7 +4020,7 @@ document.addEventListener('keydown', e=>{
 
   // ── Tip a member ──────────────────────────────────────────
   window.msWalletTip = function(receiverUserId, receiverName){
-    const senderId = window.S?.user?.id;
+    const senderId = (typeof S !== 'undefined' && S.user?.id) || window.S?.user?.id;
     if(!senderId){ toast('Please log in first','⚠️'); return; }
     if(senderId === receiverUserId){ toast("You can't tip yourself",'⚠️'); return; }
 
