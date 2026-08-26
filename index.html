@@ -274,7 +274,37 @@
   .msg-file-icon{font-size:1.1rem;flex-shrink:0}
   .msg-file-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem}
   .msg-file-size{font-size:.65rem;color:var(--muted-dim);flex-shrink:0}
-  .msg-voice{max-width:230px;height:36px}
+  /* ── Voice note — animated soundwave player ── */
+  .voice-note{display:flex;align-items:center;gap:.65rem;width:236px;max-width:100%;padding:.1rem 0}
+  .vn-play{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,var(--gold2),var(--gold));color:#1c1206;box-shadow:0 2px 8px rgba(0,0,0,.28);transition:transform .15s ease}
+  .vn-play:active{transform:scale(.9)}
+  .vn-play svg{width:15px;height:15px}
+  .vn-play .vn-ic-pause{display:none}
+  .voice-note.playing .vn-play .vn-ic-play{display:none}
+  .voice-note.playing .vn-play .vn-ic-pause{display:block}
+  .voice-note.playing .vn-play{animation:vnPulse 1.7s ease-in-out infinite}
+  @keyframes vnPulse{0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 0 rgba(200,150,62,.38)}50%{box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 7px rgba(200,150,62,0)}}
+  .vn-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:.28rem}
+  .vn-wave{position:relative;width:100%;height:26px;cursor:pointer}
+  .vn-bars{position:absolute;inset:0;display:flex;align-items:center;gap:2px}
+  .vn-bars i{flex:1 1 auto;min-width:2px;max-width:3.5px;border-radius:2px;display:block;background:var(--muted-dim);height:calc(16% + var(--h,.4) * 84%);transition:height .35s cubic-bezier(.4,0,.2,1),background .2s;transform-origin:center}
+  .vn-bars-fill{clip-path:inset(0 100% 0 0);transition:clip-path .06s linear}
+  .vn-bars-fill i{background:linear-gradient(180deg,var(--gold2),var(--gold))}
+  .voice-note.playing .vn-bars-fill i{animation:vnBob 1s ease-in-out infinite}
+  .voice-note.playing .vn-bars-fill i:nth-child(3n){animation-delay:-.15s}
+  .voice-note.playing .vn-bars-fill i:nth-child(3n+1){animation-delay:-.32s}
+  .voice-note.playing .vn-bars-fill i:nth-child(3n+2){animation-delay:-.48s}
+  @keyframes vnBob{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.16)}}
+  .vn-meta{display:flex;align-items:center;justify-content:space-between}
+  .vn-time{font-size:.63rem;color:var(--muted-dim);font-variant-numeric:tabular-nums}
+  .vn-speed{border:1px solid var(--border-strong);background:var(--surface2);color:var(--muted);border-radius:20px;padding:.05rem .4rem;font-size:.58rem;font-weight:600;cursor:pointer;line-height:1.4}
+  .vn-speed:active{transform:scale(.94)}
+  .msg.mine .voice-note .vn-bars i{background:rgba(255,255,255,.32)}
+  .msg.mine .voice-note .vn-bars-fill i{background:linear-gradient(180deg,#ffe6b0,var(--gold2))}
+  .msg.mine .voice-note .vn-play{background:linear-gradient(150deg,#ffe6b0,var(--gold2));color:#2b1c0d}
+  .msg.mine .voice-note .vn-time{color:var(--sent-text);opacity:.7}
+  .msg.mine .voice-note .vn-speed{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.09);color:var(--sent-text)}
+  .msg-video{max-width:240px;max-height:240px;border-radius:10px;display:block}
   .msg-uploading{font-size:.78rem;color:var(--muted-dim);font-style:italic;display:flex;align-items:center;gap:.4rem}
   .lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;padding:2rem}
   .lightbox-overlay.open{display:flex}
@@ -286,6 +316,21 @@
 
   /* ── Emoji picker ── */
   .emoji-picker{display:none;position:absolute;bottom:100%;left:1.4rem;right:1.4rem;margin-bottom:.6rem;max-height:224px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);padding:.5rem;z-index:82;grid-template-columns:repeat(8,1fr);gap:.1rem}
+
+  /* ── Attach menu — WhatsApp-style popup off the + button ── */
+  .attach-menu{display:none;position:absolute;bottom:100%;left:1.4rem;margin-bottom:.6rem;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);padding:.5rem;min-width:212px;z-index:83}
+  .attach-menu.open{display:block;animation:attachPop .16s cubic-bezier(.4,0,.2,1)}
+  @keyframes attachPop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+  .attach-item{width:100%;display:flex;align-items:center;gap:.75rem;background:none;border:none;text-align:left;padding:.5rem .5rem;border-radius:11px;font-size:.83rem;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s ease}
+  .attach-item:hover{background:var(--surface2)}
+  .attach-item:active{transform:scale(.98)}
+  .attach-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+  .attach-label{display:flex;align-items:center;gap:.45rem}
+  .attach-soon{font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface2);padding:.15rem .4rem;border-radius:6px}
+  .attach-item.locked{cursor:default}
+  .attach-item.locked:hover{background:none}
+  .attach-item.locked .attach-icon{opacity:.55}
+  .attach-item.locked .attach-label{color:var(--muted)}
   .emoji-picker.open{display:grid;animation:emoji-pop .15s ease}
   @keyframes emoji-pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
   .emoji-picker button{background:none;border:none;font-size:1.3rem;line-height:1;padding:.4rem 0;border-radius:9px;cursor:pointer;transition:background .15s ease,transform .12s ease}
@@ -303,6 +348,8 @@
   .input-attach-btn svg{transition:transform .2s ease}
   .input-attach-btn:hover:not(:disabled){color:var(--gold2);background:var(--surface2)}
   .input-attach-btn:hover:not(:disabled) svg{transform:rotate(90deg)}
+  .input-attach-btn.open{color:var(--gold2);background:var(--surface2)}
+  .input-attach-btn.open svg{transform:rotate(45deg)}
   .input-attach-btn:active:not(:disabled){transform:scale(.92)}
   .input-attach-btn:disabled{opacity:.35;cursor:default}
   .input-attach-btn:disabled svg{transform:none}
@@ -926,9 +973,27 @@
     <div class="input-area">
       <div class="mention-suggest" id="mentionSuggest"></div>
       <div class="emoji-picker" id="emojiPicker"></div>
+      <div class="attach-menu" id="attachMenu">
+        <button class="attach-item locked" id="attachVaultItem" onclick="pickAttach('vault')">
+          <span class="attach-icon" style="background:linear-gradient(135deg,var(--gold),var(--rust))"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <span class="attach-label">Vault <span class="attach-soon">Soon</span></span>
+        </button>
+        <button class="attach-item" onclick="pickAttach('document')">
+          <span class="attach-icon" style="background:#4f7fd6"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+          <span class="attach-label">Document</span>
+        </button>
+        <button class="attach-item" onclick="pickAttach('media')">
+          <span class="attach-icon" style="background:#d6527e"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span>
+          <span class="attach-label">Image and Video</span>
+        </button>
+        <button class="attach-item" onclick="pickAttach('audio')">
+          <span class="attach-icon" style="background:#3f9e8f"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+          <span class="attach-label">Audio</span>
+        </button>
+      </div>
       <div class="composer" id="composer">
         <div class="input-box">
-          <button class="input-attach-btn" id="attachBtn" title="Attach a file or image" aria-label="Attach a file or image" disabled onclick="triggerFileUpload()"><svg width="19" height="19" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="input-attach-btn" id="attachBtn" title="Attach" aria-label="Attach" disabled onclick="toggleAttachMenu(event)"><svg width="19" height="19" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
           <input type="file" id="fileInputHidden" style="display:none" onchange="handleFileSelected(event)"/>
           <textarea id="msgInput" rows="1" placeholder="Message the room…" aria-label="Message input" disabled oninput="handleTypingInput()" onkeydown="handleMsgKeydown(event)"></textarea>
           <button class="input-emoji-btn" id="emojiBtn" title="Emoji" aria-label="Insert emoji" disabled onclick="toggleEmojiPicker()"><svg width="19" height="19" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 10.3h.01M15.5 10.3h.01"/><path d="M8 14.5c1.1 1.35 2.5 2 4 2s2.9-.65 4-2"/></svg></button>
@@ -2243,13 +2308,15 @@ function renderMessages(){
     const timeStr=msg._uploading?'':fmtTime(msg.created_at);
     let bubbleInner;
     if(msg._uploading){
-      bubbleInner=`<div class="msg-uploading">⏳ ${msg.msg_type==='voice'?'Sending voice message…':`Uploading ${esc(msg.content||'')}…`}</div>`;
+      bubbleInner=`<div class="msg-uploading">⏳ ${msg.msg_type==='voice'&&/^Voice message/.test(msg.content||'')?'Sending voice message…':`Uploading ${esc(msg.content||'')}…`}</div>`;
     }else if(msg.msg_type==='image'){
       bubbleInner=`<img class="msg-image" src="${msg.file_url}" alt="${esc(msg.content||'image')}" onclick="openLightbox('${msg.file_url}')"/>`;
+    }else if(msg.msg_type==='video'){
+      bubbleInner=`<video class="msg-video" controls src="${msg.file_url}"></video>`;
     }else if(msg.msg_type==='file'){
       bubbleInner=`<a class="msg-file" href="${msg.file_url}" target="_blank" rel="noopener"><span class="msg-file-icon">📄</span><span class="msg-file-name">${esc(msg.content||'File')}</span>${msg.file_size?`<span class="msg-file-size">${formatFileSize(msg.file_size)}</span>`:''}</a>`;
     }else if(msg.msg_type==='voice'){
-      bubbleInner=`<audio class="msg-voice" controls src="${msg.file_url}"></audio>`;
+      bubbleInner=renderVoiceNote(msg);
     }else{
       bubbleInner=`${msg.reply_to_id?`<div class="msg-reply-quote"><div class="msg-reply-name">${esc(msg.reply_to_sender||'')}</div><div class="msg-reply-text">${esc((msg.reply_to_content||'').slice(0,60))}</div></div>`:''}${renderMentions(esc(msg.content))}${msg.edited?'<span class="msg-edited">(edited)</span>':''}${isTextMsg?`<span class="msg-time-inline">${timeStr}</span>`:''}`;
     }
@@ -2402,18 +2469,43 @@ function setComposerAttachEnabled(enabled){
   el('attachBtn').disabled=!enabled;
   el('micBtn').disabled=!enabled;
   el('emojiBtn').disabled=!enabled;
-  if(!enabled)closeEmojiPicker();
+  if(!enabled){closeEmojiPicker();closeAttachMenu()}
 }
 function triggerFileUpload(){if(!el('attachBtn').disabled)el('fileInputHidden').click()}
+
+/* ── Attach menu (Vault / Document / Image and Video / Audio) ── */
+const ATTACH_ACCEPT={
+  document:'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.rtf,.csv,.zip,.rar,.7z,.epub,.json',
+  media:'image/*,video/*',
+  audio:'audio/*'
+};
+function toggleAttachMenu(e){
+  e?.stopPropagation?.();
+  if(el('attachBtn').disabled)return;
+  const menu=el('attachMenu'),opening=!menu.classList.contains('open');
+  closeEmojiPicker();
+  menu.classList.toggle('open',opening);
+  el('attachBtn').classList.toggle('open',opening);
+}
+function closeAttachMenu(){el('attachMenu').classList.remove('open');el('attachBtn').classList.remove('open')}
+document.addEventListener('click',e=>{if(!e.target.closest('#attachMenu')&&!e.target.closest('#attachBtn'))closeAttachMenu()});
+function pickAttach(kind){
+  closeAttachMenu();
+  if(kind==='vault'){toast('Vault is coming soon ✦');return}
+  const input=el('fileInputHidden');
+  input.accept=ATTACH_ACCEPT[kind]||'';
+  input.click();
+}
 async function handleFileSelected(e){
   const file=e.target.files[0];e.target.value='';
   if(!file)return;
   if(file.size>15*1024*1024){toast('File is too large (max 15MB)','⚠️');return}
   if(S.chatMode==='dm')return handleDmFileUpload(file);
   if(!S.activeId||S.chatMode!=='room')return;
-  const isImage=file.type.startsWith('image/');
+  const isImage=file.type.startsWith('image/'),isVideo=file.type.startsWith('video/'),isAudio=file.type.startsWith('audio/');
+  const mtype=isImage?'image':isVideo?'video':isAudio?'voice':'file';
   const tid='tmp_'+(++S.tmpCount);
-  const tempMsg={id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:isImage?'image':'file',content:file.name,created_at:new Date().toISOString(),_uploading:true};
+  const tempMsg={id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:mtype,content:file.name,created_at:new Date().toISOString(),_uploading:true};
   S.messages.push(tempMsg);renderMessages();
   const safeName=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
   const path=`${S.activeId}/${S.user.id}_${Date.now()}_${safeName}`;
@@ -2423,7 +2515,7 @@ async function handleFileSelected(e){
     toast('Upload failed — check the connect-media storage bucket exists.','⚠️');console.error(uploadErr);return;
   }
   const{data:pub}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  const payload={room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:isImage?'image':'file',content:file.name,file_url:pub.publicUrl,file_size:file.size};
+  const payload={room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:mtype,content:file.name,file_url:pub.publicUrl,file_size:file.size};
   const{data,error}=await sb.from('connect_messages').insert(payload).select().single();
   const idx=S.messages.findIndex(m=>m.id===tid);
   if(idx!==-1){
@@ -2439,9 +2531,10 @@ async function handleFileSelected(e){
 async function handleDmFileUpload(file){
   if(!S.activeDmId)return;
   const conv=S.dmConversations.find(c=>c.id===S.activeDmId);if(!conv)return;
-  const isImage=file.type.startsWith('image/');
+  const isImage=file.type.startsWith('image/'),isVideo=file.type.startsWith('video/'),isAudio=file.type.startsWith('audio/');
+  const mtype=isImage?'image':isVideo?'video':isAudio?'voice':'file';
   const tid='tmp_'+(++S.tmpCount);
-  const tempMsg={id:tid,conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:isImage?'image':'file',content:file.name,created_at:new Date().toISOString(),_uploading:true};
+  const tempMsg={id:tid,conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:mtype,content:file.name,created_at:new Date().toISOString(),_uploading:true};
   S.dmMessages.push(tempMsg);renderDmMessages();
   const safeName=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
   const path=`dm/${S.activeDmId}/${S.user.id}_${Date.now()}_${safeName}`;
@@ -2451,7 +2544,7 @@ async function handleDmFileUpload(file){
     toast('Upload failed — check the connect-media storage bucket exists.','⚠️');console.error(uploadErr);return;
   }
   const{data:pub}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  const payload={conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:isImage?'image':'file',content:file.name,file_url:pub.publicUrl,file_size:file.size};
+  const payload={conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:mtype,content:file.name,file_url:pub.publicUrl,file_size:file.size};
   const{data,error}=await sb.from('dm_messages').insert(payload).select().single();
   const idx=S.dmMessages.findIndex(m=>m.id===tid);
   if(idx!==-1){
@@ -2460,7 +2553,7 @@ async function handleDmFileUpload(file){
     renderDmMessages();
   }
   if(!error){
-    const preview=isImage?'📷 Photo':'📎 '+file.name;
+    const preview=isImage?'📷 Photo':isVideo?'🎬 Video':isAudio?'🎵 Audio':'📎 '+file.name;
     const otherField=dmMySlot(conv)===1?'user2_unread':'user1_unread';
     await sb.from('dm_conversations').update({last_message:preview,last_message_at:new Date().toISOString(),[otherField]:(conv[otherField]||0)+1}).eq('id',S.activeDmId);
     conv.last_message=preview;conv.last_message_at=new Date().toISOString();renderDmList();
@@ -2473,6 +2566,128 @@ function formatFileSize(bytes){
 }
 function openLightbox(url){el('lightboxImg').src=url;el('lightboxOverlay').classList.add('open')}
 function closeLightbox(){el('lightboxOverlay').classList.remove('open');el('lightboxImg').src=''}
+
+/* ══════ Voice note player — waveform bubble ══════ */
+const VN_BARS=28;
+const _vnPeaks=new Map();          // file_url -> normalized peak array (real waveform, once decoded)
+let _vnAudioCtx=null;
+function _vnCtx(){ if(!_vnAudioCtx) _vnAudioCtx=new(window.AudioContext||window.webkitAudioContext)(); return _vnAudioCtx }
+function _vnSeedBars(seed,count=VN_BARS){
+  // deterministic placeholder waveform (looks natural) shown instantly, replaced by the real one once decoded
+  let h=0; for(let i=0;i<seed.length;i++) h=(h*31+seed.charCodeAt(i))>>>0;
+  let v=h||7; const out=[];
+  for(let i=0;i<count;i++){
+    v=(v*1103515245+12345)>>>0;
+    const envelope=.5+.5*Math.sin((i/count)*Math.PI*1.15+ (h%10)/3);
+    out.push(Math.max(.1,Math.min(1,((v%1000)/1000)*.75*envelope+.15)));
+  }
+  return out;
+}
+function _vnFmtTime(s){ s=Math.max(0,Math.round(s||0)); return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}` }
+function _vnDurationOf(msg){
+  if(msg.voice_duration)return msg.voice_duration;
+  const m=/\((\d+)s\)/.exec(msg.content||''); return m?parseInt(m[1],10):0;
+}
+function renderVoiceNote(msg){
+  const url=msg.file_url||'';
+  const dur=_vnDurationOf(msg);
+  const bars=_vnPeaks.get(url)||_vnSeedBars(url||String(msg.id));
+  const barsHtml=bars.map(h=>`<i style="--h:${h.toFixed(3)}"></i>`).join('');
+  const safeUrl=esc(url).replace(/"/g,'&quot;');
+  _vnDecodePeaks(url);
+  return `<div class="voice-note" data-url="${safeUrl}" data-duration="${dur}">
+    <audio class="vn-audio" preload="metadata" src="${url}"></audio>
+    <button class="vn-play" type="button" aria-label="Play voice message">
+      <svg class="vn-ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="vn-ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+    <div class="vn-main">
+      <div class="vn-wave">
+        <div class="vn-bars">${barsHtml}</div>
+        <div class="vn-bars vn-bars-fill">${barsHtml}</div>
+      </div>
+      <div class="vn-meta"><span class="vn-time">${_vnFmtTime(dur)}</span><button class="vn-speed" type="button">1×</button></div>
+    </div>
+  </div>`;
+}
+async function _vnDecodePeaks(url){
+  if(!url||_vnPeaks.has(url))return;
+  _vnPeaks.set(url,_vnSeedBars(url)); // avoid duplicate fetches while in-flight
+  try{
+    const res=await fetch(url);
+    const buf=await res.arrayBuffer();
+    const audioBuf=await _vnCtx().decodeAudioData(buf);
+    const raw=audioBuf.getChannelData(0);
+    const blockSize=Math.max(1,Math.floor(raw.length/VN_BARS)),peaks=[];
+    for(let i=0;i<VN_BARS;i++){
+      let sum=0; const start=i*blockSize;
+      for(let j=0;j<blockSize;j++) sum+=Math.abs(raw[start+j]||0);
+      peaks.push(sum/blockSize);
+    }
+    const max=Math.max(...peaks,.0001);
+    const norm=peaks.map(p=>Math.max(.1,Math.min(1,p/max)));
+    _vnPeaks.set(url,norm);
+    document.querySelectorAll(`.voice-note[data-url="${url.replace(/"/g,'&quot;')}"] .vn-bars`).forEach(barsEl=>{
+      barsEl.querySelectorAll('i').forEach((bar,idx)=>{ if(norm[idx]!=null) bar.style.setProperty('--h',norm[idx].toFixed(3)) });
+    });
+  }catch(err){ /* CORS or decode failure — keep the placeholder waveform */ }
+}
+function _vnUpdate(container){
+  const audio=container.querySelector('.vn-audio');
+  const dur=parseFloat(container.dataset.duration)||audio.duration||0;
+  const cur=audio.currentTime||0;
+  const pct=dur>0?Math.min(100,(cur/dur)*100):0;
+  const fill=container.querySelector('.vn-bars-fill');
+  if(fill)fill.style.clipPath=`inset(0 ${Math.max(0,100-pct)}% 0 0)`;
+  const timeEl=container.querySelector('.vn-time');
+  if(timeEl)timeEl.textContent=(!audio.paused||cur>0)&&!audio.ended?_vnFmtTime(cur):_vnFmtTime(dur);
+}
+function _vnRaf(container,audio){
+  if(!container.classList.contains('playing'))return;
+  _vnUpdate(container);
+  requestAnimationFrame(()=>_vnRaf(container,audio));
+}
+(function(){
+  const wrap=el('messages');
+  wrap.addEventListener('click',e=>{
+    const speedBtn=e.target.closest('.vn-speed');
+    if(speedBtn){
+      const container=speedBtn.closest('.voice-note'),audio=container.querySelector('.vn-audio');
+      const rates=[1,1.5,2],next=rates[(rates.indexOf(audio.playbackRate||1)+1)%rates.length];
+      audio.playbackRate=next; speedBtn.textContent=next+'×';
+      return;
+    }
+    const playBtn=e.target.closest('.vn-play');
+    if(playBtn){
+      const container=playBtn.closest('.voice-note'),audio=container.querySelector('.vn-audio');
+      if(!audio)return;
+      if(audio.paused){
+        document.querySelectorAll('.voice-note.playing').forEach(other=>{ if(other!==container){ const a=other.querySelector('.vn-audio'); if(a)a.pause() } });
+        audio.play().catch(()=>toast('Could not play voice message.','⚠️'));
+      }else audio.pause();
+      return;
+    }
+    const wave=e.target.closest('.vn-wave');
+    if(wave){
+      const container=wave.closest('.voice-note'),audio=container.querySelector('.vn-audio');
+      const dur=parseFloat(container.dataset.duration)||audio.duration||0;
+      if(!dur)return;
+      const rect=wave.getBoundingClientRect();
+      audio.currentTime=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width))*dur;
+      _vnUpdate(container);
+    }
+  });
+  ['play','pause','ended','loadedmetadata'].forEach(evt=>{
+    wrap.addEventListener(evt,e=>{
+      const audio=e.target;
+      if(!audio.classList||!audio.classList.contains('vn-audio'))return;
+      const container=audio.closest('.voice-note'); if(!container)return;
+      if(evt==='play'){ container.classList.add('playing'); _vnRaf(container,audio) }
+      if(evt==='pause'||evt==='ended'){ container.classList.remove('playing'); if(evt==='ended')audio.currentTime=0; _vnUpdate(container) }
+      if(evt==='loadedmetadata'&&(!+container.dataset.duration)&&audio.duration&&isFinite(audio.duration))container.dataset.duration=audio.duration;
+    },true); // capture — media events don't bubble
+  });
+})();
 
 /* ══════ Voice messages ══════ */
 let _mediaRecorder=null,_recordChunks=[],_recordStart=0;
@@ -2972,13 +3187,15 @@ function renderDmMessages(){
     const timeStr=m._uploading?'':fmtTime(m.created_at);
     let bubbleInner;
     if(m._uploading){
-      bubbleInner=`<div class="msg-uploading">⏳ ${m.msg_type==='voice'?'Sending voice message…':`Uploading ${esc(m.content||'')}…`}</div>`;
+      bubbleInner=`<div class="msg-uploading">⏳ ${m.msg_type==='voice'&&/^Voice message/.test(m.content||'')?'Sending voice message…':`Uploading ${esc(m.content||'')}…`}</div>`;
     }else if(m.msg_type==='image'){
       bubbleInner=`<img class="msg-image" src="${m.file_url}" alt="${esc(m.content||'image')}" onclick="openLightbox('${m.file_url}')"/>`;
+    }else if(m.msg_type==='video'){
+      bubbleInner=`<video class="msg-video" controls src="${m.file_url}"></video>`;
     }else if(m.msg_type==='file'){
       bubbleInner=`<a class="msg-file" href="${m.file_url}" target="_blank" rel="noopener"><span class="msg-file-icon">📄</span><span class="msg-file-name">${esc(m.content||'File')}</span>${m.file_size?`<span class="msg-file-size">${formatFileSize(m.file_size)}</span>`:''}</a>`;
     }else if(m.msg_type==='voice'){
-      bubbleInner=`<audio class="msg-voice" controls src="${m.file_url}"></audio>`;
+      bubbleInner=renderVoiceNote(m);
     }else{
       bubbleInner=`${esc(m.content)}${isTextMsg?`<span class="msg-time-inline">${timeStr}</span>`:''}`;
     }
