@@ -1349,6 +1349,11 @@ async function bootApp(){
   await loadMyMemberships();
   loadMentionsFromStorage();
   subscribeGlobalMentions();
+  /* Load DM conversations at boot (not just when the Chats tab is first opened) so the
+     rail's unread badge reflects reality immediately after login/reload, even if you
+     land on Community first — see loadDmConversations, which is what actually sets it. */
+  loadDmConversations();
+  subscribeDmBadgeUpdates();
   switchTab('community');
   subscribeRoomListUpdates();
 }
@@ -2090,7 +2095,11 @@ function switchTab(tab){
     if(S.communityView==='rooms'){
       if(S.activeId){
         const room=S.rooms.find(r=>r.id===S.activeId);
-        if(room){el('chName').textContent=room.name;el('chSub').textContent=roomSubtitleText(room);el('chAv').textContent=room.emoji||'📚';renderMessages()}
+        if(room){
+          el('chName').textContent=room.name;el('chSub').textContent=roomSubtitleText(room);el('chAv').textContent=room.emoji||'📚';
+          renderMessages();
+          updateInfoPanel(room,S.allRoomMembers[room.id]); // re-affirm the info panel — it doesn't persist across tab switches on its own
+        }
       }else resetChatToEmpty();
     }
   }else if(tab==='dm'){
@@ -2099,8 +2108,22 @@ function switchTab(tab){
     el('roomSearch').placeholder='Search or start a new chat';el('roomSearch').value='';
     el('roomSearch').oninput=renderDmList;
     S.chatMode='dm';
+    /* Replace #roomList's content immediately instead of leaving whatever the
+       Community tab last rendered there (rooms list) on screen while
+       loadDmConversations() is still in flight. */
+    if(S.dmConversations.length)renderDmList();
+    else el('roomList').innerHTML='<div class="empty-list">Loading chats…</div>';
     loadDmConversations();
-    if(S.activeDmId){renderDmMessages();el('msgInput').disabled=false;el('sendBtn').disabled=true;el('composer').classList.remove('has-text');setComposerAttachEnabled(true)}
+    if(S.activeDmId){
+      const conv=S.dmConversations.find(c=>c.id===S.activeDmId);
+      if(conv){
+        const other=conv._other||{username:'Unknown',initials:'?',avatar_color:'#3b2a1a'};
+        el('chAv').innerHTML='';el('chAv').style.background=other.avatar_color||'#3b2a1a';el('chAv').textContent=other.initials||'?';
+        el('chName').textContent=other.username||'Unknown';el('chSub').textContent='';
+        renderDmInfoPanel(other,conv); // same fix as rooms above — re-affirm rather than assume it's still showing
+      }
+      renderDmMessages();el('msgInput').disabled=false;el('sendBtn').disabled=true;el('composer').classList.remove('has-text');setComposerAttachEnabled(true);
+    }
     else{
       el('chAv').textContent='💬';el('chName').textContent='Chats';el('chSub').textContent='Pick a conversation';
       el('messages').innerHTML='<div class="empty-chat">Select a conversation or start a new one.</div>';
@@ -2148,7 +2171,11 @@ function setCommunityView(view){
   if(view==='rooms'){
     if(S.activeId){
       const room=S.rooms.find(r=>r.id===S.activeId);
-      if(room){el('chName').textContent=room.name;el('chSub').textContent=roomSubtitleText(room);el('chAv').textContent=room.emoji||'📚';renderMessages()}
+      if(room){
+        el('chName').textContent=room.name;el('chSub').textContent=roomSubtitleText(room);el('chAv').textContent=room.emoji||'📚';
+        renderMessages();
+        updateInfoPanel(room,S.allRoomMembers[room.id]);
+      }
     }else resetChatToEmpty();
   }
 }
@@ -2791,6 +2818,53 @@ async function loadDmConversations(){
   if(S.primaryTab==='dm')renderDmList();
 }
 function dmUnreadCount(c){return dmMySlot(c)===1?(c.user1_unread||0):(c.user2_unread||0)}
+
+/* ══════ Live rail badge ══════
+   loadDmConversations() only ever runs at boot or when the Chats tab is opened,
+   so without this, an incoming DM while you're sitting in Community wouldn't move
+   the badge until your next fetch. This is one global, boot-time subscription
+   (independent of subscribeDm(convId), which only watches whichever conversation
+   is currently open) that keeps every conversation's unread count — and the badge
+   — in sync in real time, no matter which tab you're on. */
+let _dmBadgeCh=null;
+function subscribeDmBadgeUpdates(){
+  if(_dmBadgeCh||!S.user)return;
+  _dmBadgeCh=sb.channel('dm_badge_global')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dm_conversations',filter:`user1_id=eq.${S.user.id}`},p=>handleDmConvRealtimeUpdate(p.new))
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dm_conversations',filter:`user2_id=eq.${S.user.id}`},p=>handleDmConvRealtimeUpdate(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'dm_conversations',filter:`user1_id=eq.${S.user.id}`},p=>handleDmConvRealtimeInsert(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'dm_conversations',filter:`user2_id=eq.${S.user.id}`},p=>handleDmConvRealtimeInsert(p.new))
+    .subscribe();
+}
+function recomputeDmBadge(){
+  S.dmUnreadTotal=S.dmConversations.reduce((sum,c)=>sum+dmUnreadCount(c),0);
+  const badge=el('dmBadge');
+  if(S.dmUnreadTotal>0){badge.classList.add('visible');badge.textContent=S.dmUnreadTotal>99?'99+':S.dmUnreadTotal}else badge.classList.remove('visible');
+}
+async function handleDmConvRealtimeUpdate(row){
+  const conv=S.dmConversations.find(c=>c.id===row.id);
+  if(!conv)return handleDmConvRealtimeInsert(row); // e.g. a conversation that existed before this session loaded it
+  const prevUnread=dmUnreadCount(conv);
+  Object.assign(conv,row);
+  const isOpenHere=S.chatMode==='dm'&&S.activeDmId===conv.id;
+  if(dmUnreadCount(conv)>prevUnread&&isOpenHere){
+    await markDmRead(conv); // already looking at it — don't let it sit "unread" server-side
+  }else{
+    recomputeDmBadge();
+  }
+  if(S.primaryTab==='dm')renderDmList();
+}
+async function handleDmConvRealtimeInsert(row){
+  if(S.dmConversations.some(c=>c.id===row.id))return;
+  let other={username:'Unknown',initials:'?',avatar_color:'#3b2a1a'};
+  try{
+    const{data}=await sb.from('connect_profiles').select('id,username,initials,avatar_color').eq('id',dmOtherId(row)).single();
+    if(data)other=data;
+  }catch(e){}
+  S.dmConversations.unshift({...row,_other:other});
+  recomputeDmBadge();
+  if(S.primaryTab==='dm')renderDmList();
+}
 function setDmFilter(f){
   S.dmFilter=f;
   document.querySelectorAll('#dmFilterChips .filter-chip').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
