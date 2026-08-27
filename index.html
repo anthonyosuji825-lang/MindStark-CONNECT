@@ -275,19 +275,19 @@
   .msg-file-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem}
   .msg-file-size{font-size:.65rem;color:var(--muted-dim);flex-shrink:0}
   /* ── Voice note — animated soundwave player ── */
-  .voice-note{display:flex;align-items:center;gap:.65rem;width:236px;max-width:100%;padding:.1rem 0}
-  .vn-play{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,var(--gold2),var(--gold));color:#1c1206;box-shadow:0 2px 8px rgba(0,0,0,.28);transition:transform .15s ease}
+  .voice-note{position:relative;display:flex;align-items:center;gap:.55rem;width:206px;max-width:100%}
+  .vn-play{flex-shrink:0;width:33px;height:33px;border-radius:50%;border:none;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,var(--gold2),var(--gold));color:#1c1206;box-shadow:0 2px 7px rgba(0,0,0,.26);transition:transform .15s ease}
   .vn-play:active{transform:scale(.9)}
-  .vn-play svg{width:15px;height:15px}
+  .vn-play svg{width:13px;height:13px}
   .vn-play .vn-ic-pause{display:none}
   .voice-note.playing .vn-play .vn-ic-play{display:none}
   .voice-note.playing .vn-play .vn-ic-pause{display:block}
   .voice-note.playing .vn-play{animation:vnPulse 1.7s ease-in-out infinite}
-  @keyframes vnPulse{0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 0 rgba(200,150,62,.38)}50%{box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 7px rgba(200,150,62,0)}}
-  .vn-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:.28rem}
-  .vn-wave{position:relative;width:100%;height:26px;cursor:pointer}
+  @keyframes vnPulse{0%,100%{box-shadow:0 2px 7px rgba(0,0,0,.26),0 0 0 0 rgba(200,150,62,.38)}50%{box-shadow:0 2px 7px rgba(0,0,0,.26),0 0 0 6px rgba(200,150,62,0)}}
+  .vn-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:.22rem}
+  .vn-wave{position:relative;width:100%;height:23px;cursor:pointer}
   .vn-bars{position:absolute;inset:0;display:flex;align-items:center;gap:2px}
-  .vn-bars i{flex:1 1 auto;min-width:2px;max-width:3.5px;border-radius:2px;display:block;background:var(--muted-dim);height:calc(16% + var(--h,.4) * 84%);transition:height .35s cubic-bezier(.4,0,.2,1),background .2s;transform-origin:center}
+  .vn-bars i{flex:1 1 auto;min-width:2px;max-width:3px;border-radius:2px;display:block;background:var(--muted-dim);height:calc(16% + var(--h,.4) * 84%);transition:height .35s cubic-bezier(.4,0,.2,1),background .2s;transform-origin:center}
   .vn-bars-fill{clip-path:inset(0 100% 0 0);transition:clip-path .06s linear}
   .vn-bars-fill i{background:linear-gradient(180deg,var(--gold2),var(--gold))}
   .voice-note.playing .vn-bars-fill i{animation:vnBob 1s ease-in-out infinite}
@@ -296,14 +296,56 @@
   .voice-note.playing .vn-bars-fill i:nth-child(3n+2){animation-delay:-.48s}
   @keyframes vnBob{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.16)}}
   .vn-meta{display:flex;align-items:center;justify-content:space-between}
-  .vn-time{font-size:.63rem;color:var(--muted-dim);font-variant-numeric:tabular-nums}
-  .vn-speed{border:1px solid var(--border-strong);background:var(--surface2);color:var(--muted);border-radius:20px;padding:.05rem .4rem;font-size:.58rem;font-weight:600;cursor:pointer;line-height:1.4}
+  .vn-time{font-size:.6rem;color:var(--muted-dim);font-variant-numeric:tabular-nums}
+  .vn-speed{border:1px solid var(--border-strong);background:var(--surface2);color:var(--muted);border-radius:20px;padding:.03rem .38rem;font-size:.56rem;font-weight:600;cursor:pointer;line-height:1.4}
   .vn-speed:active{transform:scale(.94)}
   .msg.mine .voice-note .vn-bars i{background:rgba(255,255,255,.32)}
   .msg.mine .voice-note .vn-bars-fill i{background:linear-gradient(180deg,#ffe6b0,var(--gold2))}
   .msg.mine .voice-note .vn-play{background:linear-gradient(150deg,#ffe6b0,var(--gold2));color:#2b1c0d}
   .msg.mine .voice-note .vn-time{color:var(--sent-text);opacity:.7}
   .msg.mine .voice-note .vn-speed{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.09);color:var(--sent-text)}
+
+  /* voice bubble transcript disclosure — a small badge pinned to the top of the note, no wasted height when closed */
+  .voice-note-wrap{display:flex;flex-direction:column}
+  .vn-transcript-toggle{position:absolute;top:-8px;right:-6px;width:19px;height:19px;border-radius:50%;border:1px solid var(--border-strong);background:var(--card);color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .15s ease,background .15s,color .15s}
+  .vn-transcript-toggle svg{width:9px;height:9px;flex-shrink:0}
+  .vn-transcript-toggle:hover{color:var(--gold2)}
+  .vn-transcript-toggle:active{transform:scale(.88)}
+  .vn-transcript-toggle.open{background:var(--gold);border-color:var(--gold);color:#1c1206}
+  .vn-transcript-body{display:none;font-size:.77rem;line-height:1.5;color:var(--text);opacity:.88;font-style:italic;padding-top:.4rem;margin-top:.4rem;border-top:1px dashed var(--border-strong)}
+  .vn-transcript-body.open{display:block}
+  .msg.mine .vn-transcript-toggle{background:var(--sent-bg);color:var(--sent-text);opacity:.75;border-color:rgba(255,255,255,.25)}
+  .msg.mine .vn-transcript-toggle.open{opacity:1;background:var(--gold2);color:#2b1c0d;border-color:var(--gold2)}
+  .msg.mine .vn-transcript-body{color:var(--sent-text);border-top-color:rgba(255,255,255,.22)}
+
+  /* ── Voice composer — record + listen-before-send ── */
+  .voice-composer{display:none;flex-direction:column;gap:.55rem;width:100%}
+  .input-area.voice-mode .composer{display:none}
+  .input-area.voice-mode .voice-composer{display:flex}
+  .voice-composer .vc-recording,.voice-composer .vc-preview,.voice-composer .vc-transcript{display:none}
+  .voice-composer.state-recording .vc-recording{display:flex;align-items:center;gap:.65rem}
+  .voice-composer.state-preview .vc-preview{display:flex;align-items:center;gap:.55rem}
+  .voice-composer.state-preview .vc-transcript{display:block}
+  .vc-rec-dot{width:9px;height:9px;border-radius:50%;background:#e05353;flex-shrink:0;animation:vcDotPulse 1s ease-in-out infinite}
+  @keyframes vcDotPulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .vc-rec-time{font-variant-numeric:tabular-nums;font-size:.85rem;font-weight:700;color:var(--text);flex-shrink:0}
+  .vc-rec-hint{flex:1;min-width:0;color:var(--muted-dim);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vc-cancel,.vc-stop,.vc-discard,.vc-send,.vc-play{width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s ease}
+  .vc-cancel:active,.vc-stop:active,.vc-discard:active,.vc-send:active,.vc-play:active{transform:scale(.9)}
+  .vc-cancel,.vc-discard{background:var(--surface2);color:var(--muted)}
+  .vc-cancel:hover,.vc-discard:hover{color:#e05353}
+  .vc-stop,.vc-send{background:linear-gradient(150deg,var(--gold2),var(--gold));color:#1c1206}
+  .vc-play{background:var(--surface2);color:var(--gold2)}
+  .vc-play svg{width:15px;height:15px}
+  .vc-play .vn-ic-pause{display:none}
+  .vc-play.playing .vn-ic-play{display:none}
+  .vc-play.playing .vn-ic-pause{display:block}
+  .vc-wave{position:relative;flex:1;min-width:0;height:26px;cursor:pointer}
+  .vc-time{font-size:.72rem;color:var(--muted-dim);font-variant-numeric:tabular-nums;flex-shrink:0}
+  .vc-transcript{background:var(--input-bg);border:1px solid var(--border);border-radius:11px;padding:.45rem .65rem}
+  .vc-transcript-label{display:flex;align-items:center;gap:.3rem;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-dim);margin-bottom:.2rem}
+  .vc-transcript-label svg{width:11px;height:11px}
+  #vcTranscriptText{display:block;width:100%;resize:none;background:transparent;border:none;color:var(--text);font-family:var(--msg-font);font-size:.8rem;line-height:1.45;outline:none;max-height:88px;overflow-y:auto;padding:0}
   .msg-video{max-width:240px;max-height:240px;border-radius:10px;display:block}
   .msg-uploading{font-size:.78rem;color:var(--muted-dim);font-style:italic;display:flex;align-items:center;gap:.4rem}
   .lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;padding:2rem}
@@ -970,7 +1012,7 @@
       </div>
       <button class="reply-preview-close" onclick="cancelReply()"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <div class="input-area">
+    <div class="input-area" id="inputArea">
       <div class="mention-suggest" id="mentionSuggest"></div>
       <div class="emoji-picker" id="emojiPicker"></div>
       <div class="attach-menu" id="attachMenu">
@@ -1002,6 +1044,33 @@
           <button class="input-mic-btn" id="micBtn" title="Record a voice message" aria-label="Record a voice message" disabled onclick="toggleVoiceRecord()"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg></button>
           <button class="send-btn" id="sendBtn" aria-label="Send message" disabled onclick="sendMessage()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
+      </div>
+      <div class="voice-composer" id="voiceComposer">
+        <div class="vc-recording" id="vcRecording">
+          <button class="vc-cancel" type="button" onclick="cancelVoiceRecording()" aria-label="Cancel recording"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          <span class="vc-rec-dot"></span>
+          <span class="vc-rec-time" id="vcRecTime">0:00</span>
+          <span class="vc-rec-hint" id="vcRecHint">Recording…</span>
+          <button class="vc-stop" type="button" onclick="stopVoiceRecording()" aria-label="Stop recording"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+        </div>
+        <div class="vc-preview" id="vcPreview">
+          <button class="vc-discard" type="button" onclick="discardVoiceRecording()" aria-label="Discard recording"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+          <button class="vc-play" id="vcPlayBtn" type="button" onclick="toggleVoicePreviewPlay()" aria-label="Play preview">
+            <svg class="vn-ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="vn-ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+          </button>
+          <div class="vc-wave" id="vcWave">
+            <div class="vn-bars" id="vcBarsBase"></div>
+            <div class="vn-bars vn-bars-fill" id="vcBarsFill"></div>
+          </div>
+          <span class="vc-time" id="vcTime">0:00</span>
+          <button class="vc-send" type="button" onclick="sendVoiceRecording()" aria-label="Send voice message"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+        </div>
+        <div class="vc-transcript" id="vcTranscript">
+          <div class="vc-transcript-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Transcript</span></div>
+          <textarea id="vcTranscriptText" rows="1" placeholder="Transcript will appear here…"></textarea>
+        </div>
+        <audio id="vcAudio" style="display:none"></audio>
       </div>
     </div>
   </main>
@@ -1294,6 +1363,76 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const AV_COLORS=['#3b2a1a','#a0522d','#4a6741','#2a4a6b','#5c3a5c','#c8963e'];
 const el=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ══════ Offline media cache — download once, view anytime (even offline) ══════
+   Every avatar, chat image/video and voice note is written to IndexedDB the first
+   time it loads. On every later visit — online or not — it's read straight back
+   out of IndexedDB instead of hitting the network again. */
+const MC_DB='connectMediaCache',MC_STORE='blobs';
+let _mcDbP=null;
+function _mcDb(){
+  if(_mcDbP)return _mcDbP;
+  _mcDbP=new Promise(resolve=>{
+    if(!window.indexedDB){resolve(null);return}
+    const req=indexedDB.open(MC_DB,1);
+    req.onupgradeneeded=()=>{try{req.result.createObjectStore(MC_STORE)}catch(e){}};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>resolve(null);
+  });
+  return _mcDbP;
+}
+async function _mcGet(url){
+  const db=await _mcDb();if(!db)return null;
+  return new Promise(resolve=>{
+    try{
+      const req=db.transaction(MC_STORE,'readonly').objectStore(MC_STORE).get(url);
+      req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);
+    }catch(e){resolve(null)}
+  });
+}
+function _mcSet(url,blob){
+  _mcDb().then(db=>{if(!db)return;try{db.transaction(MC_STORE,'readwrite').objectStore(MC_STORE).put(blob,url)}catch(e){}});
+}
+const _mcObjUrls=new Map(); // url -> local blob: object URL, cached for this session
+async function cachedMediaUrl(url){
+  if(!url)return url;
+  if(_mcObjUrls.has(url))return _mcObjUrls.get(url);
+  const hit=await _mcGet(url);
+  if(hit){const o=URL.createObjectURL(hit);_mcObjUrls.set(url,o);return o}
+  try{
+    const res=await fetch(url);
+    if(!res.ok)throw 0;
+    const blob=await res.blob();
+    _mcSet(url,blob);
+    const o=URL.createObjectURL(blob);_mcObjUrls.set(url,o);return o;
+  }catch(e){return null} // offline and not yet cached — nothing we can do
+}
+/* Call after inserting any markup that contains data-cache-src elements (img/audio/video).
+   Leaves the element's normal src alone until a cached/offline copy is ready, then swaps
+   it in — so first load behaves as before, and every load after that is instant + offline-safe. */
+function hydrateMedia(root){
+  (root||document).querySelectorAll('[data-cache-src]:not([data-mc-done])').forEach(elm=>{
+    const url=elm.getAttribute('data-cache-src');
+    elm.setAttribute('data-mc-done','1');
+    if(!url)return;
+    cachedMediaUrl(url).then(finalUrl=>{
+      if(!finalUrl)return; // offline, nothing cached yet — keep whatever src it already has
+      if(elm.src!==finalUrl)elm.src=finalUrl;
+    });
+  });
+}
+/* Sets the top chat-header avatar to a real photo when the other person has one,
+   falling back to initials otherwise — used everywhere a DM header gets (re)drawn. */
+function setChatHeaderAvatar(other){
+  const chAv=el('chAv');if(!chAv)return;
+  chAv.style.background=other.avatar_color||'#3b2a1a';
+  if(other.avatar_url){
+    chAv.innerHTML=`<img src="${esc(other.avatar_url)}" data-cache-src="${esc(other.avatar_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove();this.parentElement.textContent='${esc(other.initials||'?')}'"/>`;
+    hydrateMedia(chAv);
+  }else{
+    chAv.innerHTML='';chAv.textContent=other.initials||'?';
+  }
+}
 const mkInitials=n=>(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
 
 let S={
@@ -1457,7 +1596,8 @@ function renderRailAvatar(){
   targets.forEach(av=>{
     if(S.profile?.avatar_url){
       av.style.background='transparent';
-      av.innerHTML=`<img src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
+      av.innerHTML=`<img src="${esc(S.profile.avatar_url)}" data-cache-src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
+      hydrateMedia(av);
     }else{
       av.style.background=S.profile?.avatar_color||'var(--rust)';
       av.textContent=S.profile?.initials||'?';
@@ -1480,9 +1620,10 @@ function openProfileModal(){
   const pmAv=el('pmAv'),pmAvSidebar=el('pmAvSidebar');
   if(S.profile?.avatar_url){
     pmAv.style.background='transparent';
-    pmAv.innerHTML=`<img src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
+    pmAv.innerHTML=`<img src="${esc(S.profile.avatar_url)}" data-cache-src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
     pmAvSidebar.style.background='transparent';
-    pmAvSidebar.innerHTML=`<img src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
+    pmAvSidebar.innerHTML=`<img src="${esc(S.profile.avatar_url)}" data-cache-src="${esc(S.profile.avatar_url)}" onerror="this.remove()"/>`;
+    hydrateMedia(pmAv);hydrateMedia(pmAvSidebar);
   }else{
     pmAv.innerHTML='';
     pmAv.textContent=S.profile?.initials||'?';
@@ -1946,12 +2087,30 @@ function msWalletTip(receiverUserId,receiverName){
 }
 
 /* ══════ Members, rules & admin (info panel) ══════ */
+/* Profile pictures live on the Library "profiles" table, not connect_profiles —
+   see loadProfile(). Anywhere we show someone ELSE's avatar (message bubbles,
+   member lists, DM list/picker, chat info) needs this extra lookup merged in,
+   since connect_profiles never actually carries a real photo. */
+async function fetchAvatarUrlMap(ids){
+  const unique=[...new Set((ids||[]).filter(Boolean))];
+  if(!unique.length)return{};
+  try{
+    const{data}=await sb.from('profiles').select('id,avatar_url').in('id',unique);
+    const map={};(data||[]).forEach(p=>{if(p.avatar_url)map[p.id]=p.avatar_url});
+    return map;
+  }catch(e){return{}}
+}
 async function loadRoomMembers(roomId){
   try{
     const url=SUPABASE_URL+'/rest/v1/connect_room_members?select=*,connect_profiles(username,initials,avatar_color)&room_id=eq.'+roomId;
     const{data:{session}}=await sb.auth.getSession();
     const res=await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(session?.access_token||SUPABASE_KEY)}});
     S.allRoomMembers[roomId]=res.ok?await res.json():[];
+    const avMap=await fetchAvatarUrlMap(S.allRoomMembers[roomId].map(m=>m.user_id));
+    S.allRoomMembers[roomId].forEach(m=>{
+      if(!m.connect_profiles)m.connect_profiles={};
+      if(avMap[m.user_id])m.connect_profiles.avatar_url=avMap[m.user_id];
+    });
   }catch(e){S.allRoomMembers[roomId]=[]}
   return S.allRoomMembers[roomId];
 }
@@ -2005,7 +2164,7 @@ function updateInfoPanel(room,members){
     ${members.map(m=>{
       const p=m.connect_profiles||{};const isMe=m.user_id===S.user.id;
       return`<div class="member-row" data-user-id="${m.user_id}" onclick="${isMe?'':`openMemberActionModal('${m.user_id}','${room.id}')`}">
-        <div class="row-av" style="background:${p.avatar_color||'#3b2a1a'}">${esc(p.initials||'?')}<span class="member-online-dot"></span></div>
+        <div class="row-av" style="${p.avatar_url?'':`background:${p.avatar_color||'#3b2a1a'}`}">${p.avatar_url?`<img src="${esc(p.avatar_url)}" data-cache-src="${esc(p.avatar_url)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove();this.parentElement.style.background='${p.avatar_color||'#3b2a1a'}';this.parentElement.textContent='${esc(p.initials||'?')}'"/>`:esc(p.initials||'?')}<span class="member-online-dot"></span></div>
         <span class="member-name">${esc(p.username||'User')}${isMe?' (you)':''}</span>
         <span class="member-role">${ROLE_ICONS[m.role]||''}</span>
       </div>`;
@@ -2026,7 +2185,7 @@ function updateInfoPanel(room,members){
   }
   if(joined)extra+=`<div class="leave-wrap"><button class="danger-btn" onclick="leaveRoom('${room.id}')">🚪 ${amAdmin?'Transfer &amp; leave':'Leave room'}</button></div>`;
 
-  const holder=el('infoDynamic');if(holder)holder.innerHTML=extra;
+  const holder=el('infoDynamic');if(holder){holder.innerHTML=extra;hydrateMedia(holder)}
   updateMemberOnlineDots();
   if(amAdmin&&joined){renderAdminRequests(room.id);renderAdminAnnouncements(room.id)}
 }
@@ -2183,7 +2342,7 @@ function switchTab(tab){
       const conv=S.dmConversations.find(c=>c.id===S.activeDmId);
       if(conv){
         const other=conv._other||{username:'Unknown',initials:'?',avatar_color:'#3b2a1a'};
-        el('chAv').innerHTML='';el('chAv').style.background=other.avatar_color||'#3b2a1a';el('chAv').textContent=other.initials||'?';
+        setChatHeaderAvatar(other);
         el('chName').textContent=other.username||'Unknown';el('chSub').textContent='';
         renderDmInfoPanel(other,conv); // same fix as rooms above — re-affirm rather than assume it's still showing
       }
@@ -2310,9 +2469,9 @@ function renderMessages(){
     if(msg._uploading){
       bubbleInner=`<div class="msg-uploading">⏳ ${msg.msg_type==='voice'&&/^Voice message/.test(msg.content||'')?'Sending voice message…':`Uploading ${esc(msg.content||'')}…`}</div>`;
     }else if(msg.msg_type==='image'){
-      bubbleInner=`<img class="msg-image" src="${msg.file_url}" alt="${esc(msg.content||'image')}" onclick="openLightbox('${msg.file_url}')"/>`;
+      bubbleInner=`<img class="msg-image" src="${msg.file_url}" data-cache-src="${esc(msg.file_url)}" alt="${esc(msg.content||'image')}" onclick="openLightbox('${msg.file_url}')"/>`;
     }else if(msg.msg_type==='video'){
-      bubbleInner=`<video class="msg-video" controls src="${msg.file_url}"></video>`;
+      bubbleInner=`<video class="msg-video" controls src="${msg.file_url}" data-cache-src="${esc(msg.file_url)}"></video>`;
     }else if(msg.msg_type==='file'){
       bubbleInner=`<a class="msg-file" href="${msg.file_url}" target="_blank" rel="noopener"><span class="msg-file-icon">📄</span><span class="msg-file-name">${esc(msg.content||'File')}</span>${msg.file_size?`<span class="msg-file-size">${formatFileSize(msg.file_size)}</span>`:''}</a>`;
     }else if(msg.msg_type==='voice'){
@@ -2322,7 +2481,7 @@ function renderMessages(){
     }
     const avUrl=mine?null:getMemberAvatarUrl(S.activeId,msg.user_id);
     html+=`<div class="msg${mine?' mine':''}${grouped?' grouped':''}" data-msg-id="${msg.id}">
-      <div class="msg-av${grouped?' spacer':''}" style="${avUrl?'':`background:${msg.sender_color||'#3b2a1a'}`}">${grouped?'':(avUrl?`<img src="${esc(avUrl)}" alt="" onerror="this.parentElement.innerHTML='${esc(msg.sender_initials||'?')}';this.parentElement.style.background='${msg.sender_color||'#3b2a1a'}'"/>`:esc(msg.sender_initials||'?'))}</div>
+      <div class="msg-av${grouped?' spacer':''}" style="${avUrl?'':`background:${msg.sender_color||'#3b2a1a'}`}">${grouped?'':(avUrl?`<img src="${esc(avUrl)}" data-cache-src="${esc(avUrl)}" alt="" onerror="this.parentElement.innerHTML='${esc(msg.sender_initials||'?')}';this.parentElement.style.background='${msg.sender_color||'#3b2a1a'}'"/>`:esc(msg.sender_initials||'?'))}</div>
       <div style="max-width:100%">
         <div class="bubble"${msg._uploading?'':' oncontextmenu="return false"'}>
           ${msg._uploading?'':`<div class="msg-hover"><button onclick="openCtxMenu(event,'${msg.id}')" title="More" aria-label="Message actions"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="19" r="2.1"/></svg></button></div>`}
@@ -2335,7 +2494,7 @@ function renderMessages(){
     </div>`;
     prevMsg=msg;
   });
-  wrap.innerHTML=html;wrap.scrollTop=wrap.scrollHeight;
+  wrap.innerHTML=html;wrap.scrollTop=wrap.scrollHeight;hydrateMedia(wrap);
 }
 async function sendMessage(){
   if(S.chatMode==='dm'){sendDmMessage();return}
@@ -2564,7 +2723,11 @@ function formatFileSize(bytes){
   if(bytes<1024*1024)return(bytes/1024).toFixed(1)+' KB';
   return(bytes/1024/1024).toFixed(1)+' MB';
 }
-function openLightbox(url){el('lightboxImg').src=url;el('lightboxOverlay').classList.add('open')}
+function openLightbox(url){
+  const img=el('lightboxImg');
+  img.src=url;el('lightboxOverlay').classList.add('open');
+  cachedMediaUrl(url).then(cached=>{ if(cached&&el('lightboxOverlay').classList.contains('open'))img.src=cached });
+}
 function closeLightbox(){el('lightboxOverlay').classList.remove('open');el('lightboxImg').src=''}
 
 /* ══════ Voice note player — waveform bubble ══════ */
@@ -2595,8 +2758,9 @@ function renderVoiceNote(msg){
   const barsHtml=bars.map(h=>`<i style="--h:${h.toFixed(3)}"></i>`).join('');
   const safeUrl=esc(url).replace(/"/g,'&quot;');
   _vnDecodePeaks(url);
-  return `<div class="voice-note" data-url="${safeUrl}" data-duration="${dur}">
-    <audio class="vn-audio" preload="metadata" src="${url}"></audio>
+  const transcript=(msg.voice_transcript||'').trim();
+  const player=`<div class="voice-note" data-url="${safeUrl}" data-duration="${dur}">
+    <audio class="vn-audio" preload="metadata" src="${url}" data-cache-src="${safeUrl}"></audio>
     <button class="vn-play" type="button" aria-label="Play voice message">
       <svg class="vn-ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       <svg class="vn-ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
@@ -2608,7 +2772,10 @@ function renderVoiceNote(msg){
       </div>
       <div class="vn-meta"><span class="vn-time">${_vnFmtTime(dur)}</span><button class="vn-speed" type="button">1×</button></div>
     </div>
+    ${transcript?`<button class="vn-transcript-toggle" type="button" aria-label="Show transcript" title="Show transcript" onclick="this.classList.toggle('open');this.closest('.voice-note-wrap').querySelector('.vn-transcript-body').classList.toggle('open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>`:''}
   </div>`;
+  if(!transcript)return player;
+  return `<div class="voice-note-wrap">${player}<div class="vn-transcript-body">${esc(transcript)}</div></div>`;
 }
 async function _vnDecodePeaks(url){
   if(!url||_vnPeaks.has(url))return;
@@ -2689,36 +2856,178 @@ function _vnRaf(container,audio){
   });
 })();
 
-/* ══════ Voice messages ══════ */
-let _mediaRecorder=null,_recordChunks=[],_recordStart=0;
+/* ══════ Voice messages — record, live-transcribe, preview, send ══════ */
+let _mediaRecorder=null,_recordChunks=[],_recordStart=0,_recordStream=null,_recTimerInt=null;
+let _recognition=null,_recTranscriptFinal='';
+let _vcBlob=null,_vcBlobUrl=null,_vcDuration=0,_vcModeAtStart=null;
+
+function _vnSpeechRecognizer(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return null;
+  const r=new SR();
+  r.continuous=true;r.interimResults=true;
+  try{r.lang=navigator.language||'en-US'}catch(e){}
+  return r;
+}
+
 async function toggleVoiceRecord(){
-  if(_mediaRecorder&&_mediaRecorder.state==='recording'){_mediaRecorder.stop();return}
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){stopVoiceRecording();return}
   if(S.chatMode==='room'&&!S.activeId)return;
   if(S.chatMode==='dm'&&!S.activeDmId)return;
   if(!navigator.mediaDevices?.getUserMedia){toast('Voice recording is not supported in this browser.','⚠️');return}
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    _recordStream=stream;
     _recordChunks=[];
     _mediaRecorder=new MediaRecorder(stream);
-    const modeAtStart=S.chatMode;
+    _vcModeAtStart=S.chatMode;
     _mediaRecorder.ondataavailable=e=>{if(e.data.size>0)_recordChunks.push(e.data)};
-    _mediaRecorder.onstop=async()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      el('micBtn').classList.remove('recording');el('micBtn').title='Record a voice message';
-      const durationSec=Math.max(1,Math.round((Date.now()-_recordStart)/1000));
-      if(durationSec<1||!_recordChunks.length)return;
-      const blob=new Blob(_recordChunks,{type:'audio/webm'});
-      if(modeAtStart==='dm')await uploadDmVoiceMessage(blob,durationSec);
-      else await uploadVoiceMessage(blob,durationSec);
-    };
+    _mediaRecorder.onstop=_onRecordingStopped;
     _mediaRecorder.start();
     _recordStart=Date.now();
     el('micBtn').classList.add('recording');el('micBtn').title='Stop recording';
+
+    _recTranscriptFinal='';
+    _recognition=_vnSpeechRecognizer();
+    if(_recognition){
+      _recognition.onresult=e=>{
+        let interim='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const res=e.results[i];
+          if(res.isFinal)_recTranscriptFinal+=res[0].transcript+' ';
+          else interim+=res[0].transcript;
+        }
+        const hint=el('vcRecHint');
+        if(hint)hint.textContent=(_recTranscriptFinal+interim).trim()||'Listening…';
+      };
+      _recognition.onerror=()=>{}; // e.g. no-speech — keep recording audio regardless
+      try{_recognition.start()}catch(e){}
+    }
+
+    el('inputArea').classList.add('voice-mode');
+    const vc=el('voiceComposer');
+    vc.classList.remove('state-preview');vc.classList.add('active','state-recording');
+    el('vcRecTime').textContent='0:00';
+    el('vcRecHint').textContent=_recognition?'Listening…':'Recording…';
+    if(_recTimerInt)clearInterval(_recTimerInt);
+    _recTimerInt=setInterval(()=>{ el('vcRecTime').textContent=_vnFmtTime((Date.now()-_recordStart)/1000) },250);
   }catch(e){toast('Microphone access denied.','⚠️')}
 }
-async function uploadVoiceMessage(blob,durationSec){
+
+function stopVoiceRecording(){
+  if(_mediaRecorder&&_mediaRecorder.state==='recording')_mediaRecorder.stop();
+}
+
+async function _onRecordingStopped(){
+  if(_recTimerInt){clearInterval(_recTimerInt);_recTimerInt=null}
+  if(_recordStream){_recordStream.getTracks().forEach(t=>t.stop());_recordStream=null}
+  el('micBtn').classList.remove('recording');el('micBtn').title='Record a voice message';
+  if(_recognition){try{_recognition.stop()}catch(e){}}
+  const durationSec=Math.max(1,Math.round((Date.now()-_recordStart)/1000));
+  if(durationSec<1||!_recordChunks.length){_exitVoiceComposer();return}
+  const blob=new Blob(_recordChunks,{type:'audio/webm'});
+  await new Promise(r=>setTimeout(r,250)); // give a trailing speech-recognition result time to land
+  await _showVoicePreview(blob,durationSec);
+}
+
+async function _showVoicePreview(blob,durationSec){
+  _vcBlob=blob;_vcDuration=durationSec;
+  if(_vcBlobUrl)URL.revokeObjectURL(_vcBlobUrl);
+  _vcBlobUrl=URL.createObjectURL(blob);
+  let peaks;
+  try{
+    const buf=await blob.arrayBuffer();
+    const audioBuf=await _vnCtx().decodeAudioData(buf);
+    const raw=audioBuf.getChannelData(0);
+    const blockSize=Math.max(1,Math.floor(raw.length/VN_BARS)),arr=[];
+    for(let i=0;i<VN_BARS;i++){let sum=0;const start=i*blockSize;for(let j=0;j<blockSize;j++)sum+=Math.abs(raw[start+j]||0);arr.push(sum/blockSize)}
+    const max=Math.max(...arr,.0001);
+    peaks=arr.map(p=>Math.max(.1,Math.min(1,p/max)));
+  }catch(e){peaks=_vnSeedBars('preview'+Date.now())}
+  const barsHtml=peaks.map(h=>`<i style="--h:${h.toFixed(3)}"></i>`).join('');
+  el('vcBarsBase').innerHTML=barsHtml;
+  el('vcBarsFill').innerHTML=barsHtml;
+  el('vcBarsFill').style.clipPath='inset(0 100% 0 0)';
+  const audio=el('vcAudio');
+  audio.src=_vcBlobUrl;audio.currentTime=0;
+  el('vcTime').textContent=_vnFmtTime(durationSec);
+  el('vcPlayBtn').classList.remove('playing');
+  el('vcTranscriptText').value=_recTranscriptFinal.trim();
+  el('vcTranscriptText').placeholder=_recognition?'No speech detected — you can type it in manually':'Live transcription isn\u2019t supported in this browser — you can type it in manually';
+  const vc=el('voiceComposer');
+  vc.classList.remove('state-recording');vc.classList.add('active','state-preview');
+}
+
+function toggleVoicePreviewPlay(){
+  const audio=el('vcAudio');
+  if(!audio.src)return;
+  if(audio.paused)audio.play().catch(()=>{});
+  else audio.pause();
+}
+
+function _vcCleanup(){
+  const audio=el('vcAudio');
+  audio.pause();audio.removeAttribute('src');audio.load();
+  if(_vcBlobUrl){URL.revokeObjectURL(_vcBlobUrl);_vcBlobUrl=null}
+  _vcBlob=null;_recTranscriptFinal='';
+  _exitVoiceComposer();
+}
+function discardVoiceRecording(){_vcCleanup()}
+function cancelVoiceRecording(){
+  if(_recognition){try{_recognition.stop()}catch(e){}}
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){
+    _recordChunks=[];
+    _mediaRecorder.onstop=()=>{
+      if(_recordStream){_recordStream.getTracks().forEach(t=>t.stop());_recordStream=null}
+      el('micBtn').classList.remove('recording');el('micBtn').title='Record a voice message';
+      if(_recTimerInt){clearInterval(_recTimerInt);_recTimerInt=null}
+      _exitVoiceComposer();
+    };
+    _mediaRecorder.stop();
+  }else _exitVoiceComposer();
+}
+function _exitVoiceComposer(){
+  el('inputArea').classList.remove('voice-mode');
+  el('voiceComposer').classList.remove('active','state-recording','state-preview');
+}
+async function sendVoiceRecording(){
+  if(!_vcBlob)return;
+  const blob=_vcBlob,durationSec=_vcDuration,transcript=(el('vcTranscriptText').value||'').trim(),mode=_vcModeAtStart;
+  _vcCleanup();
+  if(mode==='dm')await uploadDmVoiceMessage(blob,durationSec,transcript);
+  else await uploadVoiceMessage(blob,durationSec,transcript);
+}
+
+/* voice preview player wiring — separate from the sent-message waveform player above */
+(function(){
+  const audio=el('vcAudio');
+  audio.addEventListener('play',()=>{el('vcPlayBtn').classList.add('playing');_vcPreviewRaf()});
+  audio.addEventListener('pause',_vcPreviewSync);
+  audio.addEventListener('ended',()=>{audio.currentTime=0;el('vcPlayBtn').classList.remove('playing');_vcPreviewSync()});
+  el('vcWave').addEventListener('click',e=>{
+    const dur=_vcDuration;if(!dur)return;
+    const rect=el('vcWave').getBoundingClientRect();
+    audio.currentTime=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width))*dur;
+    _vcPreviewSync();
+  });
+})();
+function _vcPreviewSync(){
+  const audio=el('vcAudio'),dur=_vcDuration||audio.duration||0,cur=audio.currentTime||0;
+  const pct=dur>0?Math.min(100,(cur/dur)*100):0;
+  el('vcBarsFill').style.clipPath=`inset(0 ${Math.max(0,100-pct)}% 0 0)`;
+  el('vcTime').textContent=(!audio.paused||cur>0)&&!audio.ended?_vnFmtTime(cur):_vnFmtTime(dur);
+  if(audio.paused)el('vcPlayBtn').classList.remove('playing');
+}
+function _vcPreviewRaf(){
+  const audio=el('vcAudio');
+  if(audio.paused||audio.ended)return;
+  _vcPreviewSync();
+  requestAnimationFrame(_vcPreviewRaf);
+}
+
+async function uploadVoiceMessage(blob,durationSec,transcript){
   const tid='tmp_'+(++S.tmpCount);
-  const tempMsg={id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:'voice',content:`Voice message (${durationSec}s)`,created_at:new Date().toISOString(),_uploading:true};
+  const tempMsg={id:tid,room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:'voice',content:`Voice message (${durationSec}s)`,voice_transcript:transcript||null,created_at:new Date().toISOString(),_uploading:true};
   S.messages.push(tempMsg);renderMessages();
   const path=`${S.activeId}/${S.user.id}_${Date.now()}_voice.webm`;
   const{error:uploadErr}=await sb.storage.from(STORAGE_BUCKET).upload(path,blob,{contentType:'audio/webm'});
@@ -2727,7 +3036,7 @@ async function uploadVoiceMessage(blob,durationSec){
     toast('Voice upload failed — check the connect-media storage bucket exists.','⚠️');console.error(uploadErr);return;
   }
   const{data:pub}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  const payload={room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:'voice',content:`Voice message (${durationSec}s)`,file_url:pub.publicUrl,voice_duration:durationSec};
+  const payload={room_id:S.activeId,user_id:S.user.id,sender_name:S.profile?.username||'You',sender_initials:S.profile?.initials||'?',sender_color:S.profile?.avatar_color||'#3b2a1a',msg_type:'voice',content:`Voice message (${durationSec}s)`,file_url:pub.publicUrl,voice_duration:durationSec,voice_transcript:transcript||null};
   const{data,error}=await sb.from('connect_messages').insert(payload).select().single();
   const idx=S.messages.findIndex(m=>m.id===tid);
   if(idx!==-1){
@@ -2737,12 +3046,12 @@ async function uploadVoiceMessage(blob,durationSec){
   }
 }
 /* DM equivalent — same STORAGE_BUCKET, "dm/<conversationId>/…" prefix.
-   Requires dm_messages to have msg_type, file_url and voice_duration columns. */
-async function uploadDmVoiceMessage(blob,durationSec){
+   Requires dm_messages to have msg_type, file_url, voice_duration and voice_transcript columns. */
+async function uploadDmVoiceMessage(blob,durationSec,transcript){
   if(!S.activeDmId)return;
   const conv=S.dmConversations.find(c=>c.id===S.activeDmId);if(!conv)return;
   const tid='tmp_'+(++S.tmpCount);
-  const tempMsg={id:tid,conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:'voice',content:`Voice message (${durationSec}s)`,created_at:new Date().toISOString(),_uploading:true};
+  const tempMsg={id:tid,conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:'voice',content:`Voice message (${durationSec}s)`,voice_transcript:transcript||null,created_at:new Date().toISOString(),_uploading:true};
   S.dmMessages.push(tempMsg);renderDmMessages();
   const path=`dm/${S.activeDmId}/${S.user.id}_${Date.now()}_voice.webm`;
   const{error:uploadErr}=await sb.storage.from(STORAGE_BUCKET).upload(path,blob,{contentType:'audio/webm'});
@@ -2751,7 +3060,7 @@ async function uploadDmVoiceMessage(blob,durationSec){
     toast('Voice upload failed — check the connect-media storage bucket exists.','⚠️');console.error(uploadErr);return;
   }
   const{data:pub}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  const payload={conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:'voice',content:`Voice message (${durationSec}s)`,file_url:pub.publicUrl,voice_duration:durationSec};
+  const payload={conversation_id:S.activeDmId,sender_id:S.user.id,msg_type:'voice',content:`Voice message (${durationSec}s)`,file_url:pub.publicUrl,voice_duration:durationSec,voice_transcript:transcript||null};
   const{data,error}=await sb.from('dm_messages').insert(payload).select().single();
   const idx=S.dmMessages.findIndex(m=>m.id===tid);
   if(idx!==-1){
@@ -3023,8 +3332,11 @@ async function loadDmConversations(){
   const otherIds=[...new Set((data||[]).map(dmOtherId))];
   let profiles={};
   if(otherIds.length){
-    const{data:profs}=await sb.from('connect_profiles').select('id,username,initials,avatar_color').in('id',otherIds);
-    (profs||[]).forEach(p=>profiles[p.id]=p);
+    const[{data:profs},avMap]=await Promise.all([
+      sb.from('connect_profiles').select('id,username,initials,avatar_color').in('id',otherIds),
+      fetchAvatarUrlMap(otherIds)
+    ]);
+    (profs||[]).forEach(p=>profiles[p.id]={...p,avatar_url:avMap[p.id]});
   }
   S.dmConversations=(data||[]).map(c=>({...c,_other:profiles[dmOtherId(c)]||{username:'Unknown',initials:'?',avatar_color:'#3b2a1a'}}));
   S.dmUnreadTotal=S.dmConversations.reduce((sum,c)=>sum+(dmMySlot(c)===1?(c.user1_unread||0):(c.user2_unread||0)),0);
@@ -3073,8 +3385,12 @@ async function handleDmConvRealtimeInsert(row){
   if(S.dmConversations.some(c=>c.id===row.id))return;
   let other={username:'Unknown',initials:'?',avatar_color:'#3b2a1a'};
   try{
-    const{data}=await sb.from('connect_profiles').select('id,username,initials,avatar_color').eq('id',dmOtherId(row)).single();
-    if(data)other=data;
+    const otherId=dmOtherId(row);
+    const[{data},avMap]=await Promise.all([
+      sb.from('connect_profiles').select('id,username,initials,avatar_color').eq('id',otherId).single(),
+      fetchAvatarUrlMap([otherId])
+    ]);
+    if(data)other={...data,avatar_url:avMap[otherId]};
   }catch(e){}
   S.dmConversations.unshift({...row,_other:other});
   recomputeDmBadge();
@@ -3101,7 +3417,7 @@ function renderDmList(){
     const active=c.id===S.activeDmId&&S.chatMode==='dm';
     const preview=c.last_message?esc(c.last_message.slice(0,36))+(c.last_message.length>36?'…':''):'Say hello 👋';
     return`<div class="row dm-row${active?' active':''}${unread>0?' unread':''}" onclick="openDmConversation('${c._other.id}','${c.id}')">
-      <div class="row-av" style="background:${c._other.avatar_color||'#3b2a1a'}">${c._other.avatar_url?`<img src="${c._other.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`:esc(c._other.initials||'?')}</div>
+      <div class="row-av" style="${c._other.avatar_url?'':`background:${c._other.avatar_color||'#3b2a1a'}`}">${c._other.avatar_url?`<img src="${esc(c._other.avatar_url)}" data-cache-src="${esc(c._other.avatar_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove();this.parentElement.style.background='${c._other.avatar_color||'#3b2a1a'}';this.parentElement.textContent='${esc(c._other.initials||'?')}'">`:esc(c._other.initials||'?')}</div>
       <div class="row-body">
         <div class="row-top"><span class="row-name">${esc(c._other.username||'Unknown')}</span></div>
         <div class="row-msg">${preview}</div>
@@ -3112,6 +3428,7 @@ function renderDmList(){
       </div>
     </div>`;
   }).join('');
+  hydrateMedia(list);
 }
 function toggleDmMoreMenu(e){
   e.stopPropagation();
@@ -3153,7 +3470,7 @@ async function openDmConversation(otherUserId,knownConvId){
   S.activeDmId=conv.id;closeDmPicker();
   document.getElementById('app').classList.add('mobile-chat-active');
   const other=conv._other||{username:'Unknown',initials:'?',avatar_color:'#3b2a1a'};
-  el('chAv').innerHTML='';el('chAv').style.background=other.avatar_color||'#3b2a1a';el('chAv').textContent=other.initials||'?';
+  setChatHeaderAvatar(other);
   el('chName').textContent=other.username||'Unknown';el('chSub').textContent='';
   el('msgInput').disabled=false;el('msgInput').placeholder=`Message ${other.username||''}…`;el('sendBtn').disabled=true;el('composer').classList.remove('has-text');
   setComposerAttachEnabled(true);
@@ -3189,9 +3506,9 @@ function renderDmMessages(){
     if(m._uploading){
       bubbleInner=`<div class="msg-uploading">⏳ ${m.msg_type==='voice'&&/^Voice message/.test(m.content||'')?'Sending voice message…':`Uploading ${esc(m.content||'')}…`}</div>`;
     }else if(m.msg_type==='image'){
-      bubbleInner=`<img class="msg-image" src="${m.file_url}" alt="${esc(m.content||'image')}" onclick="openLightbox('${m.file_url}')"/>`;
+      bubbleInner=`<img class="msg-image" src="${m.file_url}" data-cache-src="${esc(m.file_url)}" alt="${esc(m.content||'image')}" onclick="openLightbox('${m.file_url}')"/>`;
     }else if(m.msg_type==='video'){
-      bubbleInner=`<video class="msg-video" controls src="${m.file_url}"></video>`;
+      bubbleInner=`<video class="msg-video" controls src="${m.file_url}" data-cache-src="${esc(m.file_url)}"></video>`;
     }else if(m.msg_type==='file'){
       bubbleInner=`<a class="msg-file" href="${m.file_url}" target="_blank" rel="noopener"><span class="msg-file-icon">📄</span><span class="msg-file-name">${esc(m.content||'File')}</span>${m.file_size?`<span class="msg-file-size">${formatFileSize(m.file_size)}</span>`:''}</a>`;
     }else if(m.msg_type==='voice'){
@@ -3206,7 +3523,7 @@ function renderDmMessages(){
       </div>
     </div>`;
   });
-  wrap.innerHTML=html;wrap.scrollTop=wrap.scrollHeight;
+  wrap.innerHTML=html;wrap.scrollTop=wrap.scrollHeight;hydrateMedia(wrap);
 }
 async function sendDmMessage(){
   const input=el('msgInput'),text=input.value.trim();
@@ -3246,7 +3563,7 @@ async function runDmPickerSearch(q){
     // Username lives on connect_profiles; MindStark ID lives on the shared Library
     // "profiles" table (same one used at login) — search both and merge by id.
     let byUsername=[],byMindstarkId=[];
-    let usernameReq=sb.from('connect_profiles').select('id,username,initials,avatar_color,avatar_url').neq('id',S.user.id).limit(20);
+    let usernameReq=sb.from('connect_profiles').select('id,username,initials,avatar_color').neq('id',S.user.id).limit(20);
     if(query)usernameReq=usernameReq.ilike('username',`%${query}%`);
     const{data:unameData}=await usernameReq;
     byUsername=unameData||[];
@@ -3255,7 +3572,7 @@ async function runDmPickerSearch(q){
       const{data:idMatches}=await sb.from('profiles').select('id,mindstark_id').ilike('mindstark_id',`%${query}%`).neq('id',S.user.id).limit(20);
       if(idMatches&&idMatches.length){
         const ids=idMatches.map(m=>m.id);
-        const{data:profs}=await sb.from('connect_profiles').select('id,username,initials,avatar_color,avatar_url').in('id',ids);
+        const{data:profs}=await sb.from('connect_profiles').select('id,username,initials,avatar_color').in('id',ids);
         const byId={};(profs||[]).forEach(p=>byId[p.id]=p);
         byMindstarkId=idMatches.map(m=>({
           ...(byId[m.id]||{id:m.id,username:null,initials:'?',avatar_color:'#3b2a1a'}),
@@ -3268,12 +3585,17 @@ async function runDmPickerSearch(q){
     byUsername.forEach(p=>merged[p.id]=p);
     byMindstarkId.forEach(p=>{merged[p.id]={...merged[p.id],...p}});
     const results=Object.values(merged);
+    if(results.length){
+      const avMap=await fetchAvatarUrlMap(results.map(p=>p.id));
+      results.forEach(p=>{p.avatar_url=avMap[p.id]});
+    }
 
     if(!results.length){holder.innerHTML=`<div class="empty-list">${query?'No one found by that username or MindStark ID.':'No members found.'}</div>`;return}
     holder.innerHTML=results.map(p=>`<div class="row" onclick="openDmConversation('${p.id}')">
-      <div class="row-av" style="background:${p.avatar_color||'#3b2a1a'}">${p.avatar_url?`<img src="${p.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`:esc(p.initials||'?')}</div>
+      <div class="row-av" style="${p.avatar_url?'':`background:${p.avatar_color||'#3b2a1a'}`}">${p.avatar_url?`<img src="${esc(p.avatar_url)}" data-cache-src="${esc(p.avatar_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove();this.parentElement.style.background='${p.avatar_color||'#3b2a1a'}';this.parentElement.textContent='${esc(p.initials||'?')}'">`:esc(p.initials||'?')}</div>
       <div class="row-body"><div class="row-top"><span class="row-name">${esc(p.username||'Member')}</span></div>${p._mindstark_id?`<div class="row-msg">${esc(p._mindstark_id)}</div>`:''}</div>
     </div>`).join('');
+    hydrateMedia(holder);
   },250);
 }
 
@@ -3290,7 +3612,8 @@ async function renderDmInfoPanel(other,conv){
   const heroAv=el('riHeroAv'),heroName=el('riHeroName'),heroSub=el('riHeroSub');
   if(heroAv){
     heroAv.style.background=other.avatar_color||'#3b2a1a';
-    heroAv.innerHTML=other.avatar_url?`<img src="${esc(other.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(other.initials||'?');
+    heroAv.innerHTML=other.avatar_url?`<img src="${esc(other.avatar_url)}" data-cache-src="${esc(other.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(other.initials||'?');
+    hydrateMedia(heroAv);
   }
   if(heroName)heroName.textContent=other.username||'Unknown';
   if(heroSub)heroSub.textContent=other.status||'Connect member';
