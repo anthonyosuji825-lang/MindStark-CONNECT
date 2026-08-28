@@ -270,6 +270,12 @@
 
   .input-area{border-top:1px solid var(--border);padding:.9rem 1.4rem 1.1rem;flex-shrink:0;position:relative}
   .msg-image{max-width:220px;max-height:220px;border-radius:10px;cursor:zoom-in;display:block;object-fit:cover}
+  /* WhatsApp-style thin-bezel media bubble: no padding, image/video fills the bubble edge-to-edge,
+     corners matched to the bubble's own radius, sender name and timestamp overlaid on the media itself */
+  .bubble.bubble-media{padding:0;overflow:hidden}
+  .bubble.bubble-media .msg-image,.bubble.bubble-media .msg-video{width:100%;max-width:260px;max-height:330px;margin:0;display:block;border-radius:inherit}
+  .bubble.bubble-media .bubble-sender{position:absolute;top:0;left:0;right:0;z-index:2;margin:0;padding:.4rem .65rem .9rem;background:linear-gradient(180deg,rgba(0,0,0,.62),transparent);color:#fff!important;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
+  .media-time-badge{position:absolute;right:7px;bottom:7px;z-index:2;display:flex;align-items:center;gap:.2rem;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;line-height:1;padding:.22rem .45rem;border-radius:20px;pointer-events:none;backdrop-filter:blur(2px)}
   .msg-file{display:flex;align-items:center;gap:.5rem;background:var(--surface2);border-radius:10px;padding:.5rem .7rem;text-decoration:none;color:var(--text);max-width:220px}
   .msg-file-icon{font-size:1.1rem;flex-shrink:0}
   .msg-file-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem}
@@ -2464,6 +2470,7 @@ function renderMessages(){
       return`<div class="reaction-pill${iReacted?' mine':''}" onclick="toggleReaction('${msg.id}','${e}')">${e} ${users.length}</div>`;
     }).join('');
     const isTextMsg=!msg._uploading&&(!msg.msg_type||msg.msg_type==='text');
+    const isMediaMsg=!msg._uploading&&(msg.msg_type==='image'||msg.msg_type==='video');
     const timeStr=msg._uploading?'':fmtTime(msg.created_at);
     let bubbleInner;
     if(msg._uploading){
@@ -2483,13 +2490,14 @@ function renderMessages(){
     html+=`<div class="msg${mine?' mine':''}${grouped?' grouped':''}" data-msg-id="${msg.id}">
       <div class="msg-av${grouped?' spacer':''}" style="${avUrl?'':`background:${msg.sender_color||'#3b2a1a'}`}">${grouped?'':(avUrl?`<img src="${esc(avUrl)}" data-cache-src="${esc(avUrl)}" alt="" onerror="this.parentElement.innerHTML='${esc(msg.sender_initials||'?')}';this.parentElement.style.background='${msg.sender_color||'#3b2a1a'}'"/>`:esc(msg.sender_initials||'?'))}</div>
       <div style="max-width:100%">
-        <div class="bubble"${msg._uploading?'':' oncontextmenu="return false"'}>
+        <div class="bubble${isMediaMsg?' bubble-media':''}"${msg._uploading?'':' oncontextmenu="return false"'}>
           ${msg._uploading?'':`<div class="msg-hover"><button onclick="openCtxMenu(event,'${msg.id}')" title="More" aria-label="Message actions"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="19" r="2.1"/></svg></button></div>`}
           ${grouped?'':(mine?`<div class="bubble-sender mine">You</div>`:`<div class="bubble-sender" style="color:${senderNameColor(msg.user_id)}">${esc(msg.sender_name||'Member')}</div>`)}
           ${bubbleInner}
+          ${isMediaMsg?`<span class="media-time-badge">${timeStr}</span>`:''}
         </div>
         ${reactHtml?`<div class="msg-reactions">${reactHtml}</div>`:''}
-        ${isTextMsg?'':`<div class="msg-time">${timeStr}</div>`}
+        ${(isTextMsg||isMediaMsg)?'':`<div class="msg-time">${timeStr}</div>`}
       </div>
     </div>`;
     prevMsg=msg;
@@ -3103,37 +3111,48 @@ function updateMemberOnlineDots(){
   }
 }
 
-/* reactions / reply / edit / delete */
+/* reactions / reply / edit / delete — shared between community rooms and DMs.
+   Room messages live in S.messages/connect_messages keyed by user_id; DM messages
+   live in S.dmMessages/dm_messages keyed by sender_id. isDm below branches on
+   S.chatMode to read/write the right array + table. DM parity requires dm_messages
+   to have reactions, edited, reply_to_id, reply_to_sender and reply_to_content
+   columns (same shape as connect_messages). */
 async function toggleReaction(msgId,emoji){
-  const msg=S.messages.find(m=>String(m.id)===String(msgId));if(!msg)return;
+  const isDm=S.chatMode==='dm';
+  const msg=(isDm?S.dmMessages:S.messages).find(m=>String(m.id)===String(msgId));if(!msg)return;
   const reactions={...(msg.reactions||{})};
   const list=new Set(reactions[emoji]||[]);
   if(list.has(S.user.id))list.delete(S.user.id);else list.add(S.user.id);
   reactions[emoji]=[...list];if(!reactions[emoji].length)delete reactions[emoji];
-  const{error}=await sb.from('connect_messages').update({reactions}).eq('id',msgId);
+  const{error}=await sb.from(isDm?'dm_messages':'connect_messages').update({reactions}).eq('id',msgId);
   if(error){toast('Could not react.','⚠️');return}
-  msg.reactions=reactions;renderMessages();closeCtxMenu();
+  msg.reactions=reactions;(isDm?renderDmMessages:renderMessages)();closeCtxMenu();
 }
 function startReply(msgId){
-  const msg=S.messages.find(m=>String(m.id)===String(msgId));if(!msg)return;
-  S.replyTo={id:msg.id,sender_name:msg.sender_name,content:msg.content};
-  el('replyPreviewSender').textContent=msg.sender_name;el('replyPreviewText').textContent=msg.content;
+  const isDm=S.chatMode==='dm';
+  const msg=(isDm?S.dmMessages:S.messages).find(m=>String(m.id)===String(msgId));if(!msg)return;
+  const senderName=isDm?(msg.sender_id===S.user.id?'You':(S.dmConversations.find(c=>c.id===S.activeDmId)?._other?.username||'them')):msg.sender_name;
+  S.replyTo={id:msg.id,sender_name:senderName,content:msg.content};
+  el('replyPreviewSender').textContent=senderName;el('replyPreviewText').textContent=msg.content;
   el('replyPreview').classList.add('visible');el('msgInput').focus();closeCtxMenu();
 }
 function cancelReply(){S.replyTo=null;el('replyPreview').classList.remove('visible')}
 async function startEditMsg(msgId){
-  const msg=S.messages.find(m=>String(m.id)===String(msgId));if(!msg)return;
+  const isDm=S.chatMode==='dm';
+  const msg=(isDm?S.dmMessages:S.messages).find(m=>String(m.id)===String(msgId));if(!msg)return;
   const next=prompt('Edit message:',msg.content);closeCtxMenu();
   if(next===null||!next.trim()||next.trim()===msg.content)return;
-  const{error}=await sb.from('connect_messages').update({content:next.trim(),edited:true}).eq('id',msgId);
+  const{error}=await sb.from(isDm?'dm_messages':'connect_messages').update({content:next.trim(),edited:true}).eq('id',msgId);
   if(error){toast('Could not edit.','⚠️');return}
-  msg.content=next.trim();msg.edited=true;renderMessages();
+  msg.content=next.trim();msg.edited=true;(isDm?renderDmMessages:renderMessages)();
 }
 async function deleteMsg(msgId){
   closeCtxMenu();if(!confirm('Delete this message?'))return;
-  const{error}=await sb.from('connect_messages').delete().eq('id',msgId);
+  const isDm=S.chatMode==='dm';
+  const{error}=await sb.from(isDm?'dm_messages':'connect_messages').delete().eq('id',msgId);
   if(error){toast('Could not delete.','⚠️');return}
-  S.messages=S.messages.filter(m=>String(m.id)!==String(msgId));renderMessages();
+  if(isDm){S.dmMessages=S.dmMessages.filter(m=>String(m.id)!==String(msgId));renderDmMessages()}
+  else{S.messages=S.messages.filter(m=>String(m.id)!==String(msgId));renderMessages()}
 }
 
 /* pinned message */
@@ -3166,18 +3185,20 @@ function scrollToPinned(){
 /* context menu */
 function openCtxMenu(e,msgId){
   e.stopPropagation?.();
-  const msg=S.messages.find(m=>String(m.id)===String(msgId));if(!msg)return;
-  _ctxTarget=msg;const mine=msg.user_id===S.user.id;
+  const isDm=S.chatMode==='dm';
+  const msg=(isDm?S.dmMessages:S.messages).find(m=>String(m.id)===String(msgId));if(!msg)return;
+  _ctxTarget=msg;const mine=(isDm?msg.sender_id:msg.user_id)===S.user.id;
   const qr=el('quickReactBar');
   qr.innerHTML=REACTION_EMOJIS.map(em=>`<span onclick="toggleReaction('${msg.id}','${em}')" title="React">${em}</span>`).join('');
   el('ctxReply').onclick=()=>startReply(msg.id);
   el('ctxCopy').onclick=()=>{navigator.clipboard?.writeText(msg.content);closeCtxMenu();toast('Copied')};
   el('ctxPin').onclick=()=>pinMessage(msg.id);
-  el('ctxPin').style.display=isAdmin(S.activeId)?'':'none';
-  el('ctxPinDivider').style.display=isAdmin(S.activeId)?'':'none';
+  const canPin=!isDm&&isAdmin(S.activeId); // DMs have no admin/pin concept — see renderDmInfoPanel's "Clear chat" instead
+  el('ctxPin').style.display=canPin?'':'none';
+  el('ctxPinDivider').style.display=canPin?'':'none';
   el('ctxOwnerDivider').style.display=mine?'':'none';
   el('ctxEdit').style.display=mine?'':'none';
-  el('ctxDelete').style.display=(mine||isAdmin(S.activeId))?'':'none';
+  el('ctxDelete').style.display=(mine||(!isDm&&isAdmin(S.activeId)))?'':'none';
   el('ctxEdit').onclick=()=>startEditMsg(msg.id);
   el('ctxDelete').onclick=()=>deleteMsg(msg.id);
   const menu=el('ctxMenu');
@@ -3501,6 +3522,7 @@ function renderDmMessages(){
     if(day!==lastDate){html+=`<div class="date-div">${day}</div>`;lastDate=day}
     const mine=m.sender_id===S.user.id;
     const isTextMsg=!m._uploading&&(!m.msg_type||m.msg_type==='text');
+    const isMediaMsg=!m._uploading&&(m.msg_type==='image'||m.msg_type==='video');
     const timeStr=m._uploading?'':fmtTime(m.created_at);
     let bubbleInner;
     if(m._uploading){
@@ -3514,12 +3536,21 @@ function renderDmMessages(){
     }else if(m.msg_type==='voice'){
       bubbleInner=renderVoiceNote(m);
     }else{
-      bubbleInner=`${esc(m.content)}${isTextMsg?`<span class="msg-time-inline">${timeStr}</span>`:''}`;
+      bubbleInner=`${m.reply_to_id?`<div class="msg-reply-quote"><div class="msg-reply-name">${esc(m.reply_to_sender||'')}</div><div class="msg-reply-text">${esc((m.reply_to_content||'').slice(0,60))}</div></div>`:''}${esc(m.content)}${m.edited?'<span class="msg-edited">(edited)</span>':''}${isTextMsg?`<span class="msg-time-inline">${timeStr}</span>`:''}`;
     }
+    const reactions=m.reactions||{};
+    const reactHtml=Object.keys(reactions).filter(e=>reactions[e]?.length).map(e=>{
+      const users=reactions[e]||[],iReacted=users.includes(S.user.id);
+      return`<div class="reaction-pill${iReacted?' mine':''}" onclick="toggleReaction('${m.id}','${e}')">${e} ${users.length}</div>`;
+    }).join('');
     html+=`<div class="msg${mine?' mine':''}" data-msg-id="${m.id}">
       <div style="max-width:100%">
-        <div class="bubble">${bubbleInner}</div>
-        ${isTextMsg?'':`<div class="msg-time">${timeStr}</div>`}
+        <div class="bubble${isMediaMsg?' bubble-media':''}"${m._uploading?'':' oncontextmenu="return false"'}>
+          ${m._uploading?'':`<div class="msg-hover"><button onclick="openCtxMenu(event,'${m.id}')" title="More" aria-label="Message actions"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="19" r="2.1"/></svg></button></div>`}
+          ${bubbleInner}${isMediaMsg?`<span class="media-time-badge">${timeStr}</span>`:''}
+        </div>
+        ${reactHtml?`<div class="msg-reactions">${reactHtml}</div>`:''}
+        ${(isTextMsg||isMediaMsg)?'':`<div class="msg-time">${timeStr}</div>`}
       </div>
     </div>`;
   });
@@ -3530,10 +3561,13 @@ async function sendDmMessage(){
   if(!text||!S.activeDmId)return;
   const conv=S.dmConversations.find(c=>c.id===S.activeDmId);if(!conv)return;
   input.value='';el('sendBtn').disabled=true;el('composer').classList.remove('has-text');
+  const payload={conversation_id:S.activeDmId,sender_id:S.user.id,content:text};
+  if(S.replyTo){payload.reply_to_id=S.replyTo.id;payload.reply_to_sender=S.replyTo.sender_name;payload.reply_to_content=S.replyTo.content}
+  cancelReply();
   const tid='tmp_'+(++S.tmpCount);
-  S.dmMessages.push({id:tid,conversation_id:S.activeDmId,sender_id:S.user.id,content:text,created_at:new Date().toISOString(),_pending:true});
+  S.dmMessages.push({id:tid,...payload,created_at:new Date().toISOString(),_pending:true});
   renderDmMessages();
-  const{data,error}=await sb.from('dm_messages').insert({conversation_id:S.activeDmId,sender_id:S.user.id,content:text}).select().single();
+  const{data,error}=await sb.from('dm_messages').insert(payload).select().single();
   const idx=S.dmMessages.findIndex(m=>m.id===tid);
   if(idx!==-1){if(error){S.dmMessages.splice(idx,1);toast('Failed to send.','⚠️')}else S.dmMessages[idx]=data;renderDmMessages()}
   const otherField=dmMySlot(conv)===1?'user2_unread':'user1_unread';
